@@ -1,8 +1,8 @@
 
 import 'package:flutter/material.dart';
-import 'package:project/HomePage.dart';
-import 'package:project/RegisterPage.dart';
-import 'package:project/LoginPage.dart';
+import 'package:flutter_project/HomePage.dart';
+import 'package:flutter_project/RegisterPage.dart';
+import 'package:flutter_project/LoginPage.dart';
 class HomePageState extends State<HomePage>  {
   int currentindx = 2 ;
 

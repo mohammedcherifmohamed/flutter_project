@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:project/RegisterPage.dart';
-import 'package:project/HomePage.dart';
+import 'package:flutter_project/RegisterPage.dart';
+import 'package:flutter_project/HomePage.dart';
 
 
 class LoginPage extends StatefulWidget {

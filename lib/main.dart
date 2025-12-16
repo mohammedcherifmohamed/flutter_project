@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:project/HomePage.dart';
-import 'package:project/RegisterPage.dart';
-import 'package:project/LoginPage.dart';
+import 'package:flutter_project/HomePage.dart';
+import 'package:flutter_project/RegisterPage.dart';
+import 'package:flutter_project/LoginPage.dart';
+import 'package:flutter_project/Forgot_password.dart';
+import 'package:flutter_project/Info_user.dart';
+import 'package:flutter_project/PizzaFormPage.dart';
+import 'package:flutter_project/CartPage.dart';
+import 'package:flutter_project/OrderHistoryPage.dart';
+import 'package:flutter_project/OrderSuccessPage.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +24,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-          home: LoginPage() ,
+          home: OrderHistoryPage() ,
 
 
     );
