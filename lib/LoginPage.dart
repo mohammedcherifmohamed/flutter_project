@@ -4,6 +4,7 @@ import 'package:flutter_project/HomePage.dart';
 import 'package:flutter_project/DB.dart';
 import 'package:flutter_project/Forgot_password.dart';
 import 'package:flutter_project/Info_user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -154,6 +155,10 @@ class LoginPageState extends State<LoginPage> {
                                 );
                               } else {
                                 // Success
+                                SharedPreferences prefs = await SharedPreferences.getInstance();
+                                await prefs.setString('email', user['email']);
+                                await prefs.setString('type', user['type']);
+
                                 if (user['type'] == 'admin') {
                                   Navigator.push(
                                     context,

@@ -258,6 +258,28 @@ class RegisterPageState extends State<RegisterPage> {
                       ),
 
                       ),
+                      
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("Already have an account? "),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => LoginPage()),
+                              );
+                            },
+                            child: Text(
+                              "Login",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          )
+                        ],
+                      )
                     ],
 
               )
@@ -271,6 +293,14 @@ class RegisterPageState extends State<RegisterPage> {
                 setState(() {
                   currentindx = index;
                 });
+
+                if (index == 0) {
+                   print("Navigating to Login Page via BottomNav");
+                   Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => LoginPage()),
+                  );
+                }
 
                 if (index == 1) {
                   Navigator.push(
