@@ -3,6 +3,7 @@ import 'package:flutter_project/HomePage.dart';
 import 'package:flutter_project/DB.dart';
 import 'package:flutter_project/LoginPage.dart';
 import 'package:flutter_project/RegisterPage.dart';
+import 'package:flutter_project/Info_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Forgot_password extends StatefulWidget {
@@ -19,6 +20,10 @@ class Forgot_password_state extends State<Forgot_password> {
   final TextEditingController _currentPassController = TextEditingController();
   final TextEditingController _newPassController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
+
+  // State flags for editing
+  bool _editEmail = false;
+  bool _editPassword = false;
 
   Map<String, dynamic>? currentUser;
   bool isLoading = true;
@@ -58,7 +63,7 @@ class Forgot_password_state extends State<Forgot_password> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Admin Profile")),
+      appBar: AppBar(title: Text("forgot password")),
       body: isLoading 
           ? Center(child: CircularProgressIndicator()) 
           : Center(
@@ -75,122 +80,197 @@ class Forgot_password_state extends State<Forgot_password> {
                   key: _formKey,
                   child: SingleChildScrollView(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Name (Disabled)
+                        Center(child: Text("Display Info", style: TextStyle(fontWeight: FontWeight.bold))),
                         TextFormField(
                           controller: _nameController,
                           enabled: false,
                           decoration: InputDecoration(labelText: "Name", prefixIcon: Icon(Icons.person)),
                         ),
                         SizedBox(height: 10),
+
+                        // Selection Checkboxes
+                        Divider(),
+                        Text("Select to Edit:", style: TextStyle(fontWeight: FontWeight.bold)),
+                        CheckboxListTile(
+                          title: Text("Edit Email"),
+                          value: _editEmail, 
+                          onChanged: (val) {
+                            setState(() {
+                              _editEmail = val!;
+                              // Reset email to current if unchecked
+                              if (!_editEmail && currentUser != null) {
+                                _emailController.text = currentUser!['email'];
+                              }
+                            });
+                          }
+                        ),
+                        CheckboxListTile(
+                          title: Text("Edit Password"),
+                          value: _editPassword, 
+                          onChanged: (val) {
+                            setState(() {
+                              _editPassword = val!;
+                              if (!_editPassword) {
+                                _newPassController.clear();
+                                _confirmPassController.clear();
+                              }
+                            });
+                          }
+                        ),
+                        Divider(),
                         
-                        // Email (Disabled)
+                        // Email Field
                         TextFormField(
                           controller: _emailController,
-                          enabled: false,
+                          enabled: _editEmail,
+                          validator: (value) {
+                             if (_editEmail) {
+                               if (value == null || value.isEmpty) return "Email required";
+                               if (!value.contains("@")) return "Invalid email";
+                             }
+                             return null;
+                          },
                           decoration: InputDecoration(labelText: "Email", prefixIcon: Icon(Icons.email)),
                         ),
                         SizedBox(height: 20),
 
-                        Text("Change Password", style: TextStyle(fontWeight: FontWeight.bold)),
-                        SizedBox(height: 10),
+                        if (_editPassword) ...[
+                          Text("New Password Info", style: TextStyle(fontWeight: FontWeight.bold)),
+                          TextFormField(
+                            controller: _newPassController,
+                            obscureText: true,
+                            validator: (value) {
+                              if (_editPassword) {
+                                if (value == null || value.isEmpty) return "Required";
+                                if (value.length < 6) return "Min 6 chars";
+                                if (_currentPassController.text.isNotEmpty && _currentPassController.text == value) return "Must be different";
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(labelText: "New Password", prefixIcon: Icon(Icons.vpn_key)),
+                          ),
+                          TextFormField(
+                            controller: _confirmPassController,
+                            obscureText: true,
+                            validator: (value) {
+                               if (_editPassword) {
+                                 if (value != _newPassController.text) return "Passwords do not match";
+                               }
+                               return null;
+                            },
+                            decoration: InputDecoration(labelText: "Confirm Password", prefixIcon: Icon(Icons.check)),
+                          ),
+                          SizedBox(height: 20),
+                        ],
 
-                        // Current Password
+                        // Current Password (Always Required for changes)
+                        Text("Security Verification", style: TextStyle(fontWeight: FontWeight.bold)),
                         TextFormField(
                           controller: _currentPassController,
                           obscureText: true,
                           validator: (value) {
-                            if (value == null || value.isEmpty) return "Required";
-                            if (value != currentUser!['pass']) return "Incorrect current password";
+                            // Only validate if we are actually editing something
+                            if (_editEmail || _editPassword) {
+                               if (value == null || value.isEmpty) return "Current password required";
+                               if (value != currentUser!['pass']) return "Incorrect current password";
+                            }
                             return null;
                           },
                           decoration: InputDecoration(labelText: "Current Password", prefixIcon: Icon(Icons.lock)),
                         ),
                         
-                        // New Password
-                        TextFormField(
-                          controller: _newPassController,
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) return "Required";
-                            if (value.length < 6) return "Min 6 chars";
-                            if (_currentPassController.text == value) return "New password must be different";
-                            return null;
-                          },
-                          decoration: InputDecoration(labelText: "New Password", prefixIcon: Icon(Icons.vpn_key)),
-                        ),
-
-                        // Confirm Password
-                        TextFormField(
-                          controller: _confirmPassController,
-                          obscureText: true,
-                          validator: (value) {
-                             if (value != _newPassController.text) return "Passwords do not match";
-                             return null;
-                          },
-                          decoration: InputDecoration(labelText: "Confirm Password", prefixIcon: Icon(Icons.check)),
-                        ),
-                        
                         SizedBox(height: 20),
                         
                         // Confirm Change Button
-                        MaterialButton(
-                          onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-                              try {
-                                print("Valid form. Updating Admin password...");
-                                await updateUser(
-                                  currentUser!['uid'], 
-                                  _nameController.text, 
-                                  _newPassController.text
-                                );
-                                
-                                print("Admin password updated.");
-
-                                // Update local state to reflect new password for next time
-                                setState(() {
-                                  currentUser = {
-                                    ...currentUser!,
-                                    'pass': _newPassController.text
-                                  };
-                                });
-
+                        Center(
+                          child: MaterialButton(
+                            onPressed: () async {
+                              if (!_editEmail && !_editPassword) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Password updated successfully"))
+                                  SnackBar(content: Text("No changes selected"))
                                 );
-                                
-                                // Clear password fields
-                                _currentPassController.clear();
-                                _newPassController.clear();
-                                _confirmPassController.clear();
-                              } catch (e) {
-                                print("Error updating admin profile: $e");
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Error: $e"))
-                                );
+                                return;
                               }
-                            } else {
-                              print("Form invalid");
-                            }
-                          },
-                          color: Colors.black,
-                          textColor: Colors.white,
-                          child: Text("Confirm Change"),
+
+                              if (_formKey.currentState!.validate()) {
+                                try {
+                                  print("Valid form. Updating Admin...");
+                                  
+                                  int uid = currentUser!['uid'];
+                                  String? newEmail = _editEmail ? _emailController.text : null;
+                                  String? newPass = _editPassword ? _newPassController.text : null;
+
+                                  await updateUser(
+                                    uid, 
+                                    email: newEmail,
+                                    password: newPass
+                                  );
+                                  
+                                  print("Admin updated.");
+
+                                  // Update local state
+                                  setState(() {
+                                    currentUser = {
+                                      ...currentUser!,
+                                      if (newEmail != null) 'email': newEmail,
+                                      if (newPass != null) 'pass': newPass
+                                    };
+                                    
+                                    // Make sure shared prefs are updated if email changed!
+                                    if (newEmail != null) {
+                                      SharedPreferences.getInstance().then((prefs) {
+                                        prefs.setString('email', newEmail);
+                                      });
+                                    }
+                                  });
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Profile updated successfully"))
+                                  );
+                                  
+                                  // Clear password fields and checkboxes
+                                  _currentPassController.clear();
+                                  _newPassController.clear();
+                                  _confirmPassController.clear();
+                                  setState(() {
+                                    _editPassword = false;
+                                    _editEmail = false;
+                                  });
+                                  
+                                } catch (e) {
+                                  print("Error updating admin profile: $e");
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Error: $e"))
+                                  );
+                                }
+                              } else {
+                                print("Form invalid");
+                              }
+                            },
+                            color: Colors.black,
+                            textColor: Colors.white,
+                            child: Text("Confirm Change"),
+                          ),
                         ),
 
                         SizedBox(height: 10),
 
-                        // Consult List Button (Redirect to Interface 02)
-                        MaterialButton(
-                          onPressed: () {
-                             Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => HomePage()), 
-                              );
-                          },
-                          color: Colors.blue,
-                          textColor: Colors.white,
-                          child: Text("Consulter la liste"),
+                        // Consult List Button (Redirect to Interface 05 - Info_user)
+                        Center(
+                          child: MaterialButton(
+                            onPressed: () {
+                               Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => Info_user()), 
+                                );
+                            },
+                            color: Colors.blue,
+                            textColor: Colors.white,
+                            child: Text("Consulter la liste user"),
+                          ),
                         )
 
                       ],
@@ -200,22 +280,20 @@ class Forgot_password_state extends State<Forgot_password> {
               ),
             ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0, 
+        currentIndex: 0, // Profile is index 0
+        type: BottomNavigationBarType.fixed,
         onTap: (index) {
-          if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => LoginPage()));
-          }
-          if (index == 1) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterPage()));
-          }
-          if (index == 2) {
+          if (index == 1) { // Pizza List
             Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
+          }
+          if (index == 2) { // Admin Dashboard
+             Navigator.push(context, MaterialPageRoute(builder: (_) => Info_user()));
           }
         },
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.person_2), label: "Login"),
-          BottomNavigationBarItem(icon: Icon(Icons.add), label: "Sign-Up"),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Me"),
+          BottomNavigationBarItem(icon: Icon(Icons.local_pizza), label: "Pizzas"),
+          BottomNavigationBarItem(icon: Icon(Icons.admin_panel_settings), label: "Manage Users"),
         ],
       ),
     );

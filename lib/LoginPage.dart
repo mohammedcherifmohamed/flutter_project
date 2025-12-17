@@ -4,6 +4,8 @@ import 'package:flutter_project/HomePage.dart';
 import 'package:flutter_project/DB.dart';
 import 'package:flutter_project/Forgot_password.dart';
 import 'package:flutter_project/Info_user.dart';
+import 'package:flutter_project/UserProfile.dart';
+import 'package:flutter_project/AdminProfile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -162,12 +164,13 @@ class LoginPageState extends State<LoginPage> {
                                 if (user['type'] == 'admin') {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (_) => Forgot_password()), // Interface 04
+                                    MaterialPageRoute(builder: (_) => AdminProfile()), // Admin Profile
                                   );
                                 } else {
+                                  // Interface 05 (User)
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (_) => Info_user()), // Interface for regular users
+                                    MaterialPageRoute(builder: (_) => UserProfile()), // User Profile
                                   );
                                 }
                               }

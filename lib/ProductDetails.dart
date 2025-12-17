@@ -1,230 +1,182 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 
-class ProductDetails extends StatelessWidget{
+class ProductDetails extends StatefulWidget {
+  final Map<String, dynamic> pizza;
 
+  const ProductDetails({super.key, required this.pizza});
+
+  @override
+  State<ProductDetails> createState() => _ProductDetailsState();
+}
+
+class _ProductDetailsState extends State<ProductDetails> {
+  int quantity = 1;
+  Map<String, dynamic> options = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Decode options JSON
+    try {
+      if (widget.pizza['options'] != null) {
+        options = jsonDecode(widget.pizza['options']);
+      }
+    } catch (e) {
+      print("Error decoding options: $e");
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Restaurant App',
-      theme: ThemeData(
+    bool hasDiscount = widget.pizza['old_price'] != null && widget.pizza['old_price'] > 0;
 
-      ),
-      home:
-      Scaffold(
-      body:ListView(
-        children: [
-  Center(
-          child:Container(
-            width:350,
-            height: 350,
-
-            decoration: BoxDecoration(
-             color: Colors.white,
-             borderRadius: BorderRadius.circular(10),
-
-             boxShadow: [
-                BoxShadow(
-                  color: Colors.yellow.withOpacity(0.2),
-                  spreadRadius: 2.5,
-                  blurRadius: 3,
-                  offset: Offset(0, 4),
-                ),
-              ]
-            ),
-
-            child:Image.asset(
-              "salta3burger.png",
-            fit:BoxFit.cover,
-            )
-          ),
-  ),
-          Center(
-
-          child:Container(
-            padding: EdgeInsets.all(20),
-            margin: EdgeInsets.only(top:20),
-            width: 350,
-            height: 210,
-            decoration: BoxDecoration(
-              color:Colors.white,
-                boxShadow: [
-                BoxShadow(
-                  color:Colors.red.withOpacity(0.3),
-                  spreadRadius: 1.5,
-                  blurRadius: 5,
-                  offset: Offset(0,4),
-                ),
-              ]
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Stack(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children:[
-                      Text("The classic",
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight:FontWeight.bold,
-                      ),),
-                      Text("49,5",
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight:FontWeight.bold,
-                          decoration:TextDecoration.lineThrough,
+                Container(
+                  height: 300,
+                  width: double.infinity,
+                  color: Colors.orange.shade100, // Background placeholder
+                  child: Image.asset(
+                    widget.pizza['img'] ?? "assets/salta3burger.png",
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Icon(Icons.broken_image, size: 80, color: Colors.grey),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 40),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_back, color: Colors.black),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
                         ),
                       ),
-                  ],
-
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children:[
-                    Container(
-                      height:50,
-                      width:90,
-                      padding:EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color:Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color:Colors.black.withOpacity(0.2),
-                            spreadRadius: 2,
-                            blurRadius: 3,
-                            offset: Offset(0,4),
-
-
-                          ),
-                        ]
+                      CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: Icon(Icons.favorite_border, color: Colors.black),
                       ),
-                      child:Column(
-
-                        children: [
-                          Icon(Icons.fire_extinguisher),
-                          Text("245 Calories",
-                            style: TextStyle(
-                              fontSize:10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding:EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color:Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow:[
-                          BoxShadow(
-                            color:Colors.black.withOpacity(0.2),
-                            spreadRadius:2,
-                            blurRadius:3,
-                            offset:Offset(0,4),
-                          ),
-                        ],
-                      ),
-                      child:Column(
-                        children: [
-                          Icon(Icons.monitor_weight_rounded),
-                          Text("24g Protein",
-                          style:TextStyle(
-                            fontSize:10,
-                            fontWeight: FontWeight.bold,
-                          ),),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        borderRadius:BorderRadius.circular(10),
-                          color:Colors.white,
-                          boxShadow:[
-                            BoxShadow(
-                              color:Colors.black.withOpacity(0.2),
-                              spreadRadius :2,
-                              blurRadius:3,
-                              offset:Offset(0,4),
-
-                            )
-                          ]
-                      ),
-                      child:Column(
-                        children: [
-                          Icon(Icons.shield_rounded),
-                          Text("18g Fat",
-                          style:TextStyle(
-                            fontSize:10,
-                            fontWeight:FontWeight.bold,
-                          )),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding:EdgeInsets.all(10),
-                      decoration:BoxDecoration(
-                        color:Colors.white,
-                        borderRadius:BorderRadius.circular(10),
-                        boxShadow:[BoxShadow(
-                          color:Colors.black.withOpacity(0.2),
-                          spreadRadius:2,
-                          blurRadius:3,
-                          offset:Offset(0,4),
-                        ),
-            ],
-                      ),
-                      child:Column(
-
-                        children: [
-                          Icon(Icons.network_wifi_2_bar_outlined),
-                          Text("26g Carbs",
-                          style:TextStyle(
-                            fontSize:11,
-                            fontWeight:FontWeight.bold,
-                          ),),
-                        ],
-                      ),
-                    ),
-
-                  ],
-                ),
-                Column(
-                  children: [
-                    Center(
-                      child:
-                    Container(
-                      alignment: Alignment.center,
-
-                      width:double.infinity,
-                      padding:EdgeInsets.all(10),
-                      decoration:BoxDecoration(
-                        color:Colors.black,
-                        borderRadius:BorderRadius.circular(10),
-
-                      ),
-                    child:Text("Buy Now",
-                    style:TextStyle(
-                      fontSize:18,
-                      fontWeight:FontWeight.bold, 
-                      color:Colors.white,
-
-                    )),
-                    ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          ),
-
-        ],
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.pizza['title'] ?? 'Pizza Name',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text(
+                        "DA ${widget.pizza['price']}",
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold, color: Colors.orange),
+                      ),
+                      if (hasDiscount) ...[
+                        SizedBox(width: 10),
+                        Text(
+                          "DA ${widget.pizza['old_price']}",
+                          style: TextStyle(
+                              fontSize: 16,
+                              decoration: TextDecoration.lineThrough,
+                              color: Colors.grey),
+                        ),
+                      ],
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  // Render Options
+                  if (options.isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                        Text("Nutritional Info / Options:", style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(height: 5),
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: options.entries.map((entry) {
+                                return Column(
+                                    children: [
+                                        Text(entry.key.toUpperCase(), style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                        Text(entry.value.toString(), style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ],
+                                );
+                            }).toList(),
+                        ),
+                        Divider(height: 30),
+                    ]
+                  ),
+                  
+                  Text("Description", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  SizedBox(height: 5),
+                  Text(
+                    widget.pizza['desc'] ?? 'No description available.',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+      bottomNavigationBar: Container(
+        height: 80,
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 1)],
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+             Row(
+                children: [
+                    IconButton(
+                        onPressed: () {
+                            if (quantity > 1) setState(() => quantity--);
+                        },
+                        icon: Icon(Icons.remove_circle_outline, color: Colors.grey),
+                    ),
+                    Text("$quantity", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    IconButton(
+                        onPressed: () {
+                            setState(() => quantity++);
+                        },
+                        icon: Icon(Icons.add_circle, color: Colors.orange),
+                    ),
+                ],
+             ),
+             ElevatedButton(
+                 onPressed: () {
+                     // Add to cart logic (Interface 07 later)
+                 },
+                 style: ElevatedButton.styleFrom(
+                     backgroundColor: Colors.orange,
+                     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))
+                 ),
+                 child: Text("Add to Cart", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+             )
+          ],
+        ),
       ),
-
     );
   }
 }

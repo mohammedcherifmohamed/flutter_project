@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'HomePage.dart'; // Assuming Interface 02 might be related to Home or a separate Pizza List page
+import 'package:flutter/material.dart';
+import 'package:flutter_project/DB.dart';
+import 'package:flutter_project/HomePage.dart';
 
 class PizzaFormPage extends StatefulWidget {
   final Map<String, dynamic>? pizzaData; // Pass data to simulate edit mode
@@ -57,16 +59,51 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        // Static success message
-        _isError = false;
-        _message = widget.pizzaData == null
-            ? "Pizza ajoutée avec succès !"
-            : "Pizza modifiée avec succès !";
-      });
-      // Here you would normally handle the logic
+      try {
+        if (widget.pizzaData == null) {
+          // ADD MODE
+          await insertPizza(
+            _titleController.text,
+            _descriptionController.text,
+            _imageController.text,
+            double.parse(_priceController.text),
+            _oldPriceController.text.isEmpty ? null : double.parse(_oldPriceController.text),
+            _qteStockController.text.isEmpty ? 0 : int.parse(_qteStockController.text),
+            _isVeg,
+            _natureController.text,
+            _optionsController.text.isEmpty ? '{}' : _optionsController.text,
+          );
+           setState(() {
+            _isError = false;
+            _message = "Pizza ajoutée avec succès !";
+          });
+        } else {
+          // EDIT MODE
+          await updatePizza(
+            widget.pizzaData!['pid'],
+            _titleController.text,
+            _descriptionController.text,
+            _imageController.text,
+            double.parse(_priceController.text),
+            _oldPriceController.text.isEmpty ? null : double.parse(_oldPriceController.text),
+            _qteStockController.text.isEmpty ? 0 : int.parse(_qteStockController.text),
+            _isVeg,
+            _natureController.text,
+            _optionsController.text.isEmpty ? '{}' : _optionsController.text,
+          );
+           setState(() {
+            _isError = false;
+            _message = "Pizza modifiée avec succès !";
+          });
+        }
+      } catch (e) {
+         setState(() {
+          _isError = true;
+          _message = "Erreur: $e";
+        });
+      }
     } else {
        setState(() {
         _isError = true;
@@ -76,12 +113,7 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
   }
 
   void _goToPizzaPage() {
-    // Redirect to Interface 02 (Mock navigation)
-    // Navigator.pushNamed(context, '/pizzaPage'); 
-    print("Navigating to Pizza Page (Interface 02)");
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Navigation vers la page Pizza...")),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
   }
 
   @override

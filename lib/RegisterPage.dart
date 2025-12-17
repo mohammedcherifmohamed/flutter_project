@@ -236,7 +236,7 @@ class RegisterPageState extends State<RegisterPage> {
                                  _usernameController.text.trim(),
                                  email,
                                  _passwordController.text.trim(),
-                                 "user",
+                                 "admin",
                                  true,
                                );
                                List <Map<String,dynamic>>  res = await getUsers();

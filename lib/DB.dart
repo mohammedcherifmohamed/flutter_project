@@ -12,7 +12,7 @@ Future<void> initDB() async {
   String path = await getDatabasesPath();
   print(path);
 
-  database = await openDatabase(
+      database = await openDatabase(
     join(path, 'database.db'),
     onCreate: (db, version) async {
       print("Creating tables...");
@@ -144,7 +144,106 @@ Future<void> initDB() async {
       });
 
     },
-    version: 1, // Keep version 1 to rely on uninstall for reset, or increment to force upgrade
+    onUpgrade: (db, oldVersion, newVersion) async {
+      print("Upgrading DB from $oldVersion to $newVersion");
+      if (oldVersion < 2) {
+         // Create Pizza Table
+        await db.execute(
+          'CREATE TABLE IF NOT EXISTS pizza ('
+          'pid INTEGER PRIMARY KEY AUTOINCREMENT, '
+          'title TEXT, '
+          'desc TEXT, '
+          'img TEXT, '
+          'price REAL, '
+          'old_price REAL, '
+          'QteStock INTEGER, '
+          'isVeg INTEGER, '
+          'nature TEXT, '
+          'options TEXT, '
+          'archive INTEGER DEFAULT 1'
+          ')',
+        );
+
+        // Create Command Table
+        await db.execute(
+          'CREATE TABLE IF NOT EXISTS command ('
+          'cid INTEGER PRIMARY KEY AUTOINCREMENT, '
+          'date TEXT, '
+          'uid INTEGER, '
+          'FOREIGN KEY (uid) REFERENCES users (uid)'
+          ')',
+        );
+
+        // Create CommandInfo Table
+        await db.execute(
+          'CREATE TABLE IF NOT EXISTS commandinfo ('
+          'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+          'Qte INTEGER, '
+          'price REAL, '
+          'pid INTEGER, '
+          'FOREIGN KEY (pid) REFERENCES pizza (pid)'
+          ')',
+        );
+
+         // Helper to seed pizza if empty (optional, but good for migration)
+         // Pizza 1: Mexican
+        await db.insert('pizza', {
+          'title': 'Mexican',
+          'desc': 'Spicy mexican pizza with chili',
+          'img': 'assets/salta3burger.png',
+          'price': 12.0,
+          'old_price': 15.0,
+          'QteStock': 10,
+          'isVeg': 0,
+          'nature': 'Spicy',
+          'options': jsonEncode({'calories': 300, 'protein': 20, 'fat': 10, 'carbs': 50}),
+          'archive': 1
+        });
+
+        // Pizza 2: Vegetarian
+        await db.insert('pizza', {
+          'title': 'Vegetarian',
+          'desc': 'Fresh veggies cheese',
+          'img': 'assets/salta3burger.png',
+          'price': 10.0,
+          'old_price': 12.0,
+          'QteStock': 15,
+          'isVeg': 1,
+          'nature': 'Healthy',
+          'options': jsonEncode({'calories': 250, 'protein': 10, 'fat': 5, 'carbs': 40}),
+          'archive': 1
+        });
+
+         // Pizza 3: Cheese
+        await db.insert('pizza', {
+          'title': '4 Cheese',
+          'desc': 'Mozzarella, Cheddar, Blue, Parmesan',
+          'img': 'assets/salta3burger.png',
+          'price': 11.0,
+          'old_price': 14.0,
+          'QteStock': 8,
+          'isVeg': 1,
+          'nature': 'Cheesy',
+          'options': jsonEncode({'calories': 400, 'protein': 18, 'fat': 20, 'carbs': 45}),
+          'archive': 1
+        });
+
+        // Pizza 4: Margarita
+        await db.insert('pizza', {
+          'title': 'Margarita',
+          'desc': 'Classic tomato and basil',
+          'img': 'assets/salta3burger.png',
+          'price': 9.0,
+          'old_price': 10.0,
+          'QteStock': 20,
+          'isVeg': 1,
+          'nature': 'Classic',
+          'options': jsonEncode({'calories': 220, 'protein': 8, 'fat': 8, 'carbs': 35}),
+          'archive': 1
+        });
+      }
+    },
+    version: 2,
   );
 }
 
@@ -190,16 +289,128 @@ Future<void> deleteAllUsers() async {
 }
 
 // UPDATE USER METHOD (for Interface 04/05)
-Future<void> updateUser(int uid, String name, [String? password]) async {
+Future<void> updateUser(int uid, {String? name, String? email, String? password}) async {
   print("Updating user $uid...");
-  Map<String, dynamic> updateData = {'name': name};
-  if (password != null && password.isNotEmpty) {
-    updateData['pass'] = password;
+  Map<String, dynamic> updateData = {};
+  
+  if (name != null) updateData['name'] = name;
+  if (email != null) updateData['email'] = email;
+  if (password != null && password.isNotEmpty) updateData['pass'] = password;
+
+  if (updateData.isNotEmpty) {
+    await database.update(
+      'users',
+      updateData,
+      where: 'uid = ?',
+      whereArgs: [uid],
+    );
   }
+}
+
+// ADMIN Management Methods
+Future<void> deleteUser(int uid) async {
+  print("Deleting user $uid...");
+  await database.delete('users', where: 'uid = ?', whereArgs: [uid]);
+}
+
+Future<void> toggleUserStatus(int uid, int active) async {
+  print("Setting user $uid active status to $active...");
   await database.update(
     'users',
-    updateData,
+    {'active': active},
     where: 'uid = ?',
     whereArgs: [uid],
   );
+}
+
+Future<List<Map<String, dynamic>>> getRegularUsers() async {
+  print("Fetching regular users...");
+  // Filter out users where type is explicitly 'admin'
+  // Note: Depending on case sensitivity, usually 'admin'.
+  return await database.query(
+    'users',
+    where: 'type != ?',
+    whereArgs: ['admin'],
+  );
+}
+
+// ============== PIZZA METHODS ===============
+
+Future<List<Map<String, dynamic>>> getPizzas() async {
+    print("Fetching active pizzas...");
+    return await database.query(
+        'pizza',
+        where: 'archive = ?',
+        whereArgs: [1]
+    );
+}
+
+Future<void> insertPizza(
+    String title,
+    String desc,
+    String img,
+    double price,
+    double? oldPrice,
+    int qteStock,
+    bool isVeg,
+    String nature,
+    String optionsJson
+) async {
+    print("Inserting pizza: $title");
+    await database.insert(
+        'pizza',
+        {
+            'title': title,
+            'desc': desc,
+            'img': img,
+            'price': price,
+            'old_price': oldPrice,
+            'QteStock': qteStock,
+            'isVeg': isVeg ? 1 : 0,
+            'nature': nature,
+            'options': optionsJson,
+            'archive': 1 // Default active
+        }
+    );
+}
+
+Future<void> updatePizza(
+    int pid,
+    String title,
+    String desc,
+    String img,
+    double price,
+    double? oldPrice,
+    int qteStock,
+    bool isVeg,
+    String nature,
+    String optionsJson
+) async {
+    print("Updating pizza: $pid");
+    await database.update(
+        'pizza',
+        {
+            'title': title,
+            'desc': desc,
+            'img': img,
+            'price': price,
+            'old_price': oldPrice,
+            'QteStock': qteStock,
+            'isVeg': isVeg ? 1 : 0,
+            'nature': nature,
+            'options': optionsJson
+        },
+        where: 'pid = ?',
+        whereArgs: [pid]
+    );
+}
+
+Future<void> archivePizza(int pid) async {
+    print("Archiving pizza: $pid");
+    await database.update(
+        'pizza',
+        {'archive': 0},
+        where: 'pid = ?',
+        whereArgs: [pid]
+    );
 }

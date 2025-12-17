@@ -3,7 +3,9 @@ import 'package:flutter_project/HomePage.dart';
 import 'package:flutter_project/DB.dart';
 import 'package:flutter_project/LoginPage.dart';
 import 'package:flutter_project/RegisterPage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_project/RegisterPage.dart';
+import 'package:flutter_project/Forgot_password.dart';
+import 'package:flutter_project/AdminProfile.dart';
 
 class Info_user extends StatefulWidget {
   const Info_user({super.key});
@@ -11,231 +13,203 @@ class Info_user extends StatefulWidget {
 }
 
 class Info_user_state extends State<Info_user> {
-  final _formKey = GlobalKey<FormState>();
+  // Sorting options
+  int _sortColumnIndex = 0;
+  bool _sortAscending = true;
+  String _sortCriteria = 'Name'; // 'Name' or 'Etat'
 
-  // Controllers
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _currentPassController = TextEditingController();
-  final TextEditingController _newPassController = TextEditingController();
-  final TextEditingController _confirmPassController = TextEditingController();
-
-  Map<String, dynamic>? currentUser;
+  List<Map<String, dynamic>> users = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    _loadUsers();
   }
 
-  Future<void> _loadUserProfile() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? email = prefs.getString('email');
-    if (email != null) {
-      var user = await getUserByEmail(email);
-      if (user != null) {
-        setState(() {
-          currentUser = user;
-          _nameController.text = user['name'];
-          _emailController.text = user['email'];
-          isLoading = false;
-        });
-      }
+  Future<void> _loadUsers() async {
+    setState(() {
+      isLoading = true; 
+    });
+    try {
+      print("Loading users...");
+      // Create a mutable copy of the list
+      List<Map<String, dynamic>> fetchedUsers = List.from(await getRegularUsers());
+      print("Users fetched: ${fetchedUsers.length}");
+      
+      // Sort logic
+      fetchedUsers.sort((a, b) {
+        int compare;
+        if (_sortCriteria == 'Name') {
+          compare = a['name'].toString().toLowerCase().compareTo(b['name'].toString().toLowerCase());
+        } else { // Etat / Active
+          compare = a['active'].compareTo(b['active']);
+        }
+        return _sortAscending ? compare : -compare;
+      });
+
+      setState(() {
+        users = fetchedUsers;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Error loading users: $e");
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error loading users: $e")),
+      );
     }
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _currentPassController.dispose();
-    _newPassController.dispose();
-    _confirmPassController.dispose();
-    super.dispose();
+  Future<void> _handleDelete(int uid) async {
+    await deleteUser(uid);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("User deleted")));
+    _loadUsers();
+  }
+
+  Future<void> _handleToggleActive(int uid, int currentStatus) async {
+    int newStatus = currentStatus == 1 ? 0 : 1;
+    await toggleUserStatus(uid, newStatus);
+    String statusMsg = newStatus == 1 ? "User Activated" : "User Deactivated";
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(statusMsg)));
+    _loadUsers();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("User Profile")),
+      appBar: AppBar(title: Text("Manage Users")),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : Center(
-              child: Container(
-                width: 300,
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.white60, Colors.black12],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Sorting Controls
+                  Container(
+                    padding: EdgeInsets.all(10),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Change Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 10),
-                        
-                        // Email (Disabled)
-                        TextFormField(
-                          controller: _emailController,
-                          enabled: false,
-                          decoration: InputDecoration(labelText: "Email", prefixIcon: Icon(Icons.email)),
-                        ),
-                        SizedBox(height: 10),
-
-                        // Name (Editable)
-                        TextFormField(
-                          controller: _nameController,
-                          validator: (value) {
-                             if(value == null || value.isEmpty) return "Name required";
-                             return null;
-                          },
-                          decoration: InputDecoration(labelText: "Name", prefixIcon: Icon(Icons.person)),
-                        ),
-                        SizedBox(height: 20),
-
-                        Text("Security", style: TextStyle(fontWeight: FontWeight.bold)),
-                        
-                        // Current Password
-                        TextFormField(
-                          controller: _currentPassController,
-                          obscureText: true,
-                          validator: (value) {
-                             // Always required to confirm identity before ANY change
-                             if (value == null || value.isEmpty) return "Current password required";
-                             if (value != currentUser!['pass']) return "Incorrect current password";
-                             return null;
-                          },
-                          decoration: InputDecoration(labelText: "Current Password", prefixIcon: Icon(Icons.lock)),
-                        ),
-
-                        // New Password (Optional)
-                        TextFormField(
-                          controller: _newPassController,
-                          obscureText: true,
-                          validator: (value) {
-                            // If empty, user only wants to change name -> VALID
-                            if (value == null || value.isEmpty) return null;
-                            
-                            // If not empty, enforce rules
-                            if (value.length < 6) return "Min 6 chars";
-                            if (!value.contains(RegExp(r'[A-Z]'))) return "Missing uppercase";
-                            if (!value.contains(RegExp(r'[a-z]'))) return "Missing lowercase";
-                            if (!value.contains(RegExp(r'[0-9]'))) return "Missing digit";
-                            
-                            if (value == _currentPassController.text) return "New password must be different";
-                            
-                            return null;
-                          },
-                          decoration: InputDecoration(labelText: "New Password (Optional)", prefixIcon: Icon(Icons.vpn_key)),
-                        ),
-
-                        // Confirm Password
-                        TextFormField(
-                          controller: _confirmPassController,
-                          obscureText: true,
-                          validator: (value) {
-                             // If new pass is empty, this must be empty/ignored
-                             if (_newPassController.text.isEmpty) return null;
-                             
-                             if (value != _newPassController.text) return "Passwords do not match";
-                             return null;
-                          },
-                          decoration: InputDecoration(labelText: "Confirm Password", prefixIcon: Icon(Icons.check)),
-                        ),
-
-                        SizedBox(height: 20),
-
-                        // Confirm Change Button
-                        MaterialButton(
-                          onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-                              try {
-                                print("Valid form. Updating user...");
-                                String newPass = _newPassController.text;
-                                String? passToUpdate = newPass.isNotEmpty ? newPass : null;
-                                
-                                int uid = currentUser!['uid'];
-                                print("Updating UID: $uid, Name: ${_nameController.text}, Pass: $passToUpdate");
-
-                                await updateUser(
-                                  uid, 
-                                  _nameController.text, 
-                                  passToUpdate
-                                );
-                                
+                        Text("Sort By:", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Row(
+                          children: [
+                            Radio<String>(
+                              value: 'Name',
+                              groupValue: _sortCriteria,
+                              onChanged: (val) {
                                 setState(() {
-                                  String finalPass = passToUpdate ?? currentUser!['pass']; 
-                                  currentUser = {
-                                    ...currentUser!,
-                                    'name': _nameController.text,
-                                    'pass': finalPass
-                                  };
+                                  _sortCriteria = val!;
+                                  _loadUsers();
                                 });
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Profile updated successfully"))
-                                );
-                                
-                                _currentPassController.clear();
-                                _newPassController.clear();
-                                _confirmPassController.clear();
-                              } catch (e) {
-                                print("Error updating profile: $e");
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Error: $e"))
-                                );
-                              }
-                            } else {
-                              print("Form invalid");
-                            }
-                          },
-                          color: Colors.black,
-                          textColor: Colors.white,
-                          child: Text("Confirm Change"),
+                              },
+                            ),
+                            Text("Name"),
+                            SizedBox(width: 20),
+                            Radio<String>(
+                              value: 'Etat',
+                              groupValue: _sortCriteria,
+                              onChanged: (val) {
+                                setState(() {
+                                  _sortCriteria = val!;
+                                  _loadUsers();
+                                });
+                              },
+                            ),
+                            Text("Etat (Active)"),
+                          ],
                         ),
-
-                        SizedBox(height: 10),
-
-                        // Consult List Button (Redirect to Interface 02)
-                        MaterialButton(
-                          onPressed: () {
-                             Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => HomePage()), 
-                              );
-                          },
-                          color: Colors.blue,
-                          textColor: Colors.white,
-                          child: Text("Consulter la liste"),
-                        )
+                        Row(
+                          children: [
+                            Text("Order: "),
+                            Switch(
+                              value: _sortAscending,
+                              onChanged: (val) {
+                                setState(() {
+                                  _sortAscending = val;
+                                  _loadUsers();
+                                });
+                              },
+                            ),
+                            Text(_sortAscending ? "Ascending" : "Descending"),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                ),
+                  Divider(),
+
+                  // Data Table
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: [
+                        DataColumn(label: Text('ID')),
+                        DataColumn(label: Text('NAME')),
+                        DataColumn(label: Text('EMAIL')),
+                        DataColumn(label: Text('ETAT')),
+                        DataColumn(label: Text('ACTIONS')),
+                      ],
+                      rows: users.map((user) {
+                        bool isActive = user['active'] == 1;
+                        return DataRow(cells: [
+                          DataCell(Text(user['uid'].toString())),
+                          DataCell(Text(user['name'])),
+                          DataCell(Text(user['email'])),
+                          DataCell(
+                            Container(
+                              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: isActive ? Colors.green : Colors.red,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                isActive ? "Active" : "Disabled",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Row(
+                              children: [
+                                // Toggle Active Button
+                                IconButton(
+                                  icon: Icon(isActive ? Icons.toggle_on : Icons.toggle_off),
+                                  color: isActive ? Colors.green : Colors.grey,
+                                  onPressed: () => _handleToggleActive(user['uid'], user['active']),
+                                ),
+                                // Delete Button
+                                IconButton(
+                                  icon: Icon(Icons.delete),
+                                  color: Colors.red,
+                                  onPressed: () => _handleDelete(user['uid']),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ]);
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
             ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0, // Highlight "Login" / Profile
+        currentIndex: 2, // Manage Users is index 2
+        type: BottomNavigationBarType.fixed,
         onTap: (index) {
-          if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => LoginPage()));
+          if (index == 0) { // Admin Profile
+            Navigator.push(context, MaterialPageRoute(builder: (_) => AdminProfile()));
           }
-          if (index == 1) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterPage()));
-          }
-          if (index == 2) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
+          if (index == 1) { // Pizza List
+             Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
           }
         },
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.person_2), label: "Login"),
-          BottomNavigationBarItem(icon: Icon(Icons.add), label: "Sign-Up"),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Me"),
+          BottomNavigationBarItem(icon: Icon(Icons.local_pizza), label: "Pizzas"),
+          BottomNavigationBarItem(icon: Icon(Icons.admin_panel_settings), label: "Manage Users"),
         ],
       ),
     );
