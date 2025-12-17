@@ -1,113 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_project/DB.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderHistoryPage extends StatefulWidget {
-  const OrderHistoryPage({super.key});
-
   @override
-  State<OrderHistoryPage> createState() => _OrderHistoryPageState();
+  _OrderHistoryPageState createState() => _OrderHistoryPageState();
 }
 
 class _OrderHistoryPageState extends State<OrderHistoryPage> {
-  // Static data for orders
-  // Using a list that we can modify to test the empty state
-  List<Map<String, dynamic>> _orders = [
-    {
-      'id': 'CMD-001',
-      'date': '2023-10-25',
-      'pizzaCount': 3,
-      'totalPrice': 45.5,
-    },
-    {
-      'id': 'CMD-002',
-      'date': '2023-10-28',
-      'pizzaCount': 1,
-      'totalPrice': 15.0,
-    },
-    {
-      'id': 'CMD-003',
-      'date': '2023-11-02',
-      'pizzaCount': 2,
-      'totalPrice': 28.0,
-    },
-  ];
+  List<Map<String, dynamic>> orders = [];
+  bool isLoading = true;
 
-  void _toggleEmptyState() {
-    setState(() {
-      if (_orders.isEmpty) {
-        _orders = [
-          {
-            'id': 'CMD-001',
-            'date': '2023-10-25',
-            'pizzaCount': 3,
-            'totalPrice': 45.5,
-          },
-          {
-            'id': 'CMD-002',
-            'date': '2023-10-28',
-            'pizzaCount': 1,
-            'totalPrice': 15.0,
-          },
-        ];
-      } else {
-        _orders = [];
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? uid = prefs.getInt('uid');
+
+    // Fallback if uid is not in prefs (e.g. login before fix applied)
+    if (uid == null) {
+        String? email = prefs.getString('email');
+        if (email != null) {
+            var user = await getUserByEmail(email);
+            if (user != null) {
+                uid = user['uid'];
+            }
+        }
+    }
+
+    if (uid != null) {
+        try {
+            List<Map<String, dynamic>> data = await getUserOrders(uid);
+            setState(() {
+                orders = data;
+                isLoading = false;
+            });
+        } catch (e) {
+            print("Error fetching orders: $e");
+            setState(() { isLoading = false; });
+        }
+    } else {
+        setState(() { isLoading = false; });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mes Commandes (Interface 08)'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Toggle Empty State (Top Secret Debug Button)',
-            onPressed: _toggleEmptyState,
-          ),
-        ],
+        title: Text("Order History"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _orders.isEmpty
-            ? const Center(
-                child: Text(
-                  'Aucune commande existe',
-                  style: TextStyle(fontSize: 20, color: Colors.grey),
+      body: isLoading 
+      ? Center(child: CircularProgressIndicator()) 
+      : orders.isEmpty
+        ? Center(child: Text("Aucune commande existe")) // Req: "Aucune commande existe"
+        : Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: SingleChildScrollView(
+                child: Table(
+                    border: TableBorder.all(color: Colors.grey.shade300),
+                    columnWidths: const {
+                        0: FlexColumnWidth(1), // ID
+                        1: FlexColumnWidth(3), // Date
+                        2: FlexColumnWidth(2), // Nbr Pizzas
+                        3: FlexColumnWidth(2), // Total
+                    },
+                    children: [
+                         TableRow(
+                            decoration: BoxDecoration(color: Colors.blue.shade100),
+                            children: [
+                                Padding(padding: EdgeInsets.all(8), child: Text("ID", style: TextStyle(fontWeight: FontWeight.bold))),
+                                Padding(padding: EdgeInsets.all(8), child: Text("Date", style: TextStyle(fontWeight: FontWeight.bold))),
+                                Padding(padding: EdgeInsets.all(8), child: Text("Pizzas", style: TextStyle(fontWeight: FontWeight.bold))),
+                                Padding(padding: EdgeInsets.all(8), child: Text("Total", style: TextStyle(fontWeight: FontWeight.bold))),
+                            ]
+                         ),
+                         ...orders.map((order) {
+                             return TableRow(
+                                 children: [
+                                     Padding(padding: EdgeInsets.all(8), child: Text("${order['cid']}")),
+                                     Padding(padding: EdgeInsets.all(8), child: Text("${order['date']}")),
+                                     Padding(padding: EdgeInsets.all(8), child: Text("${order['pizza_count']}")),
+                                     Padding(padding: EdgeInsets.all(8), child: Text("DA ${order['total_price']}")),
+                                 ]
+                             );
+                         }).toList()
+                    ],
                 ),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                   const Text(
-                    'Historique des commandes',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columns: const [
-                          DataColumn(label: Text('Commande ID')),
-                          DataColumn(label: Text('Date')),
-                          DataColumn(label: Text('Nbr Pizza')),
-                          DataColumn(label: Text('Prix Total')),
-                        ],
-                        rows: _orders.map((order) {
-                          return DataRow(cells: [
-                            DataCell(Text(order['id'])),
-                            DataCell(Text(order['date'])),
-                            DataCell(Text(order['pizzaCount'].toString())),
-                            DataCell(Text('${order['totalPrice']} €')),
-                          ]);
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-      ),
+            ),
+        ),
     );
   }
 }

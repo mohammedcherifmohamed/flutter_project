@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter_project/Cart.dart'; 
 
 class ProductDetails extends StatefulWidget {
   final Map<String, dynamic> pizza;
@@ -11,8 +12,8 @@ class ProductDetails extends StatefulWidget {
 }
 
 class _ProductDetailsState extends State<ProductDetails> {
+  Map<String, dynamic>? options;
   int quantity = 1;
-  Map<String, dynamic> options = {};
 
   @override
   void initState() {
@@ -27,155 +28,227 @@ class _ProductDetailsState extends State<ProductDetails> {
     }
   }
 
+  void _addToCart() {
+    Cart().add(
+      widget.pizza['pid'],
+      widget.pizza['title'],
+      widget.pizza['price'],
+      widget.pizza['img'] ?? "assets/salta3burger.png",
+      quantity
+    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Added to Cart!")));
+    Navigator.pop(context);
+  }
+
+  void _incrementQuantity() {
+    if (quantity < widget.pizza['QteStock']) {
+      setState(() {
+        quantity++;
+      });
+    } else {
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Max stock reached")));
+    }
+  }
+
+  void _decrementQuantity() {
+    if (quantity > 1) {
+      setState(() {
+        quantity--;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    bool hasDiscount = widget.pizza['old_price'] != null && widget.pizza['old_price'] > 0;
-
+    bool hasDiscount = widget.pizza['old_price'] != null && (widget.pizza['old_price'] is num) && widget.pizza['old_price'] > 0;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                Container(
-                  height: 300,
-                  width: double.infinity,
-                  color: Colors.orange.shade100, // Background placeholder
-                  child: Image.asset(
-                    widget.pizza['img'] ?? "assets/salta3burger.png",
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Icon(Icons.broken_image, size: 80, color: Colors.grey),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 40),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: IconButton(
-                          icon: Icon(Icons.arrow_back, color: Colors.black),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ),
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.favorite_border, color: Colors.black),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+      body: Stack(
+        children: [
+          // Background Image
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 300,
+            child: Image.asset(
+              widget.pizza['img'] ?? "assets/salta3burger.png",
+              fit: BoxFit.cover,
+              errorBuilder: (ctx, err, stack) => Container(color: Colors.grey, child: Icon(Icons.broken_image, size: 50)),
             ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.pizza['title'] ?? 'Pizza Name',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Text(
-                        "DA ${widget.pizza['price']}",
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold, color: Colors.orange),
-                      ),
-                      if (hasDiscount) ...[
-                        SizedBox(width: 10),
-                        Text(
-                          "DA ${widget.pizza['old_price']}",
-                          style: TextStyle(
-                              fontSize: 16,
-                              decoration: TextDecoration.lineThrough,
-                              color: Colors.grey),
-                        ),
-                      ],
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  // Render Options
-                  if (options.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                        Text("Nutritional Info / Options:", style: TextStyle(fontWeight: FontWeight.bold)),
-                        SizedBox(height: 5),
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: options.entries.map((entry) {
-                                return Column(
-                                    children: [
-                                        Text(entry.key.toUpperCase(), style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                        Text(entry.value.toString(), style: TextStyle(fontWeight: FontWeight.bold)),
-                                    ],
-                                );
-                            }).toList(),
-                        ),
-                        Divider(height: 30),
-                    ]
-                  ),
-                  
-                  Text("Description", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 5),
-                  Text(
-                    widget.pizza['desc'] ?? 'No description available.',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ],
+          ),
+          // Back Button
+          Positioned(
+            top: 40,
+            left: 20,
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.pop(context),
               ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        height: 80,
-        padding: EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 1)],
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-             Row(
-                children: [
-                    IconButton(
-                        onPressed: () {
-                            if (quantity > 1) setState(() => quantity--);
-                        },
-                        icon: Icon(Icons.remove_circle_outline, color: Colors.grey),
-                    ),
-                    Text("$quantity", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    IconButton(
-                        onPressed: () {
-                            setState(() => quantity++);
-                        },
-                        icon: Icon(Icons.add_circle, color: Colors.orange),
-                    ),
-                ],
+          ),
+           // Cart Icon with Badge
+           Positioned(
+            top: 40,
+            right: 20,
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: IconButton(
+                icon: Icon(Icons.shopping_cart, color: Colors.orange),
+                onPressed: () {
+                   // Just purely visual or maybe show current count in snackbar
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Items in cart: ${Cart().itemCount}")));
+                },
+              ),
+            ),
+           ),
+           // Count badge
+           Positioned(
+             top: 35,
+             right: 15,
+             child: Container(
+               padding: EdgeInsets.all(4),
+               decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+               child: Text("${Cart().itemCount}", style: TextStyle(color: Colors.white, fontSize: 12)),
              ),
-             ElevatedButton(
-                 onPressed: () {
-                     // Add to cart logic (Interface 07 later)
-                 },
-                 style: ElevatedButton.styleFrom(
-                     backgroundColor: Colors.orange,
-                     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))
-                 ),
-                 child: Text("Add to Cart", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-             )
-          ],
-        ),
+           ),
+
+          // Content
+          Positioned(
+            top: 280,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                   Center(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.pizza['title'] ?? "Pizza Name",
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                                Text(
+                                    "DA ${widget.pizza['price']}",
+                                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.orange),
+                                ),
+                                if (hasDiscount)
+                                    Text(
+                                        "DA ${widget.pizza['old_price']}",
+                                        style: TextStyle(fontSize: 14, decoration: TextDecoration.lineThrough, color: Colors.grey),
+                                    ),
+                            ],
+                        )
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                     Row(
+                      children: [
+                        Icon(Icons.star, color: Colors.amber, size: 20),
+                        Text(" 4.5 ", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text("(243 reviews)", style: TextStyle(color: Colors.grey)),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      "Description",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      widget.pizza['desc'] ?? "No description available.",
+                      style: TextStyle(color: Colors.grey, height: 1.5),
+                    ),
+                     SizedBox(height: 20),
+                    if (options != null) ...[
+                        Text(
+                        "Nutritional Info",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 10),
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: options!.entries.map((e) => 
+                                Chip(
+                                    label: Text("${e.key}: ${e.value}"),
+                                    backgroundColor: Colors.orange.withOpacity(0.1),
+                                )
+                            ).toList(),
+                        )
+                    ],
+                    SizedBox(height: 30),
+                    // Quantity Selector
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: _decrementQuantity, 
+                          icon: Icon(Icons.remove_circle_outline)
+                        ),
+                        Text(
+                          "$quantity", 
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                        ),
+                        IconButton(
+                          onPressed: _incrementQuantity, 
+                          icon: Icon(Icons.add_circle_outline)
+                        ),
+                         Text(
+                          " (Stock: ${widget.pizza['QteStock']})", 
+                          style: TextStyle(color: Colors.grey)
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _addToCart,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          "Ajouter carte", // Requirement: Changer le texte du button en « ajouter carte »
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

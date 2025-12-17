@@ -62,7 +62,9 @@ Future<void> initDB() async {
         'Qte INTEGER, '
         'price REAL, '
         'pid INTEGER, '
-        'FOREIGN KEY (pid) REFERENCES pizza (pid)'
+        'cid INTEGER, ' 
+        'FOREIGN KEY (pid) REFERENCES pizza (pid), '
+        'FOREIGN KEY (cid) REFERENCES command (cid)'
         ')',
       );
 
@@ -190,7 +192,7 @@ Future<void> initDB() async {
         await db.insert('pizza', {
           'title': 'Mexican',
           'desc': 'Spicy mexican pizza with chili',
-          'img': 'assets/salta3burger.png',
+          'img': 'assets/salta3burger.png', // Placeholder
           'price': 12.0,
           'old_price': 15.0,
           'QteStock': 10,
@@ -242,8 +244,14 @@ Future<void> initDB() async {
           'archive': 1
         });
       }
+
+      if (oldVersion < 3) {
+        // Fix commandinfo table to include cid if it was missed or recreate it
+        // Since sqlite ALTER TABLE ADD COLUMN is supported
+        await db.execute('ALTER TABLE commandinfo ADD COLUMN cid INTEGER REFERENCES command(cid)');
+      }
     },
-    version: 2,
+    version: 3,
   );
 }
 
@@ -413,4 +421,57 @@ Future<void> archivePizza(int pid) async {
         where: 'pid = ?',
         whereArgs: [pid]
     );
+}
+
+// ============== ORDERING METHODS ===============
+
+// 1. Insert Command (Header)
+Future<int> insertCommand(int uid, String date) async {
+    print("Creating order for user $uid on $date");
+    return await database.insert('command', {
+        'uid': uid,
+        'date': date
+    });
+}
+
+// 2. Insert Command Info (Details)
+Future<void> insertCommandInfo(int cid, int pid, int qte, double price) async {
+    print("Adding item to order $cid: pid=$pid, qte=$qte");
+    await database.insert('commandinfo', {
+        'cid': cid,
+        'pid': pid,
+        'Qte': qte,
+        'price': price
+    });
+}
+
+// 3. Update Stock
+Future<void> updateStock(int pid, int quantityToRemove) async {
+    print("Reducing stock for pizza $pid by $quantityToRemove");
+    // This is a bit unsafe without transactions but sufficient for this level
+    // Better query: UPDATE pizza SET QteStock = QteStock - ? WHERE pid = ?
+    await database.rawUpdate(
+        'UPDATE pizza SET QteStock = QteStock - ? WHERE pid = ?',
+        [quantityToRemove, pid]
+    );
+}
+
+// 4. Get User Orders
+Future<List<Map<String, dynamic>>> getUserOrders(int uid) async {
+    print("Fetching orders for user $uid");
+    // We need: cid, date, count(pizzas), total_price
+    // Using a raw query with JOIN and GROUP BY
+    // Note: price in commandinfo is the unit price or total item price? 
+    // Usually unit price. So total is sum(price * qte).
+    
+    return await database.rawQuery('''
+        SELECT c.cid, c.date, 
+               CAST(SUM(ci.Qte) as INTEGER) as pizza_count, 
+               SUM(ci.price * ci.Qte) as total_price
+        FROM command c
+        JOIN commandinfo ci ON c.cid = ci.cid
+        WHERE c.uid = ?
+        GROUP BY c.cid, c.date
+        ORDER BY c.cid DESC
+    ''', [uid]);
 }

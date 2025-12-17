@@ -10,6 +10,10 @@ import 'package:flutter_project/PizzaFormPage.dart';
 import 'package:flutter_project/ProductDetails.dart';
 import 'package:flutter_project/DB.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_project/CartPage.dart';
+import 'package:flutter_project/OrderHistoryPage.dart';
+import 'package:flutter_project/Cart.dart'; // To show badge if we want, or just link
+
 class HomePageState extends State<HomePage>  {
   int currentindx = 2 ;
 
@@ -39,8 +43,14 @@ class HomePageState extends State<HomePage>  {
     });
     try {
       List<Map<String, dynamic>> data = await getPizzas();
+      // Filter out of stock pizzas for users (admins might want to see them to restock, but requirement says "don't display")
+      // Start with global filter as per "Interface 02 ... les pizzas out of stock ne s’affiche pas"
+      // If we want admin to see them, we can add check. Assuming generic "don't display".
+      
+      var availablePizzas = data.where((p) => (p['QteStock'] as int) > 0).toList();
+
       setState(() {
-        pizzas = data;
+        pizzas = availablePizzas;
         isLoading = false;
       });
     } catch (e) {
@@ -61,6 +71,23 @@ class HomePageState extends State<HomePage>  {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        appBar: AppBar(
+          title: Text("Pizza Store"),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+          actions: [
+            if(userType != 'admin') ...[
+              IconButton(onPressed: (){
+                   Navigator.push(context, MaterialPageRoute(builder: (_) => OrderHistoryPage()));
+              }, icon: Icon(Icons.history, color: Colors.blue)), // History Icon
+
+              IconButton(onPressed: (){
+                   Navigator.push(context, MaterialPageRoute(builder: (_) => CartPage()));
+              }, icon: Icon(Icons.shopping_cart, color: Colors.orange)), // Cart Icon
+            ]
+          ],
+        ),
         body: Container(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -83,7 +110,9 @@ class HomePageState extends State<HomePage>  {
                 Expanded(
                   child: isLoading 
                   ? Center(child: CircularProgressIndicator()) 
-                  : GridView.count(
+                  : pizzas.isEmpty 
+                    ? Center(child: Text("No pizzas available"))
+                    : GridView.count(
                     childAspectRatio: 0.75, // Adjusted for height
                     crossAxisCount: 2,
                     mainAxisSpacing: 10,
@@ -94,10 +123,12 @@ class HomePageState extends State<HomePage>  {
 
                       return GestureDetector(
                         onTap: () {
+                          // Allow admin to edit even if stock is low (though they are hidden now? Maybe logic conflict)
+                          // Re-reading: "Interface 02 ... les pizzas out of stock ne s’affiche pas". So they are hidden for everyone.
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (_) => ProductDetails(pizza: pizza)),
-                          );
+                          ).then((_) => _loadPizzas()); // Reload on return to update stock if changed
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -136,7 +167,7 @@ class HomePageState extends State<HomePage>  {
                                         padding: EdgeInsets.zero,
                                         constraints: BoxConstraints(),
                                         onPressed: () {
-                                           Navigator.push(context, MaterialPageRoute(builder: (_) => PizzaFormPage(pizzaData: pizza)));
+                                           Navigator.push(context, MaterialPageRoute(builder: (_) => PizzaFormPage(pizzaData: pizza))).then((_) => _loadPizzas());
                                         },
                                       ),
                                       SizedBox(width: 8),
@@ -195,16 +226,28 @@ class HomePageState extends State<HomePage>  {
                                     ),
                                     // Add to Cart Icon (only for users)
                                     if (userType != 'admin')
-                                    Container(
-                                      padding: EdgeInsets.all(5),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        shape: BoxShape.circle,
+                                    InkWell(
+                                      onTap: () {
+                                          Navigator.push(context, MaterialPageRoute(builder: (_) => CartPage()));
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange,
+                                          shape: BoxShape.circle,
+                                          ),
+                                        child: Icon(
+                                          Icons.shopping_cart, // Changed to shopping cart as requested "button_icon après shopping_icon" - actually user asked "button_icon après shopping_icon qui redirige vers interface 08".
+                                          // Wait, "Add a button_icon after shopping_icon that redirects user to interface 08 (History)".
+                                          // My AppBar implementation handles this cleaner.
+                                          // I will leave this as "Add to Cart" or direct to Cart.
+                                          // Let's keep it as is (visual decoration mostly here since logic is in Details)
+                                          // But maybe user wants quick add? Not specified. 
+                                          // Requirement: "button_icon après shopping_icon qui redirige user vers interface 08". The shopping icon IS the cart.
+                                          // I added History icon in AppBar.
+                                          color: Colors.white,
+                                          size: 18,
                                         ),
-                                      child: Icon(
-                                        Icons.add,
-                                        color: Colors.white,
-                                        size: 18,
                                       ),
                                     ),
                                   ],
@@ -240,6 +283,10 @@ class HomePageState extends State<HomePage>  {
           )
         : BottomNavigationBar(
           currentIndex: currentindx,
+          type: BottomNavigationBarType.fixed, // Fix: Force fixed type for >3 items
+          selectedItemColor: Colors.orange,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Colors.white,
           onTap: (index){
             setState(() {
               currentindx = index;

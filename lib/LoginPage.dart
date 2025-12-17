@@ -160,6 +160,7 @@ class LoginPageState extends State<LoginPage> {
                                 SharedPreferences prefs = await SharedPreferences.getInstance();
                                 await prefs.setString('email', user['email']);
                                 await prefs.setString('type', user['type']);
+                                await prefs.setInt('uid', user['uid']);
 
                                 if (user['type'] == 'admin') {
                                   Navigator.push(
