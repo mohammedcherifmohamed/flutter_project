@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_project/RegisterPage.dart';
 import 'package:flutter_project/HomePage.dart';
+import 'package:flutter_project/DB.dart';
+import 'package:flutter_project/Forgot_password.dart';
+import 'package:flutter_project/Info_user.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -10,6 +13,16 @@ class LoginPage extends StatefulWidget {
 
 class LoginPageState extends State<LoginPage> {
   int currentindx = 0 ;
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   int i = 0 ;
   bool is_empty=true ,has_upper = false , has_lower = false , has_number = false , has_special = false , valid_length = false;
@@ -43,6 +56,7 @@ class LoginPageState extends State<LoginPage> {
                         margin: EdgeInsets.only(top:70),
                         child:
                         TextFormField(
+                          controller: _emailController,
                           validator:(value){
                             if(value!.isEmpty){
                               return "Email cannot be empty";
@@ -79,6 +93,7 @@ class LoginPageState extends State<LoginPage> {
                             children:[
                               // Password Input
                               TextFormField(
+                                controller: _passwordController,
                                 onChanged: (value){
                                   setState(() {
                                     has_upper = value.contains(RegExp(r'[A-Z]'));
@@ -114,22 +129,53 @@ class LoginPageState extends State<LoginPage> {
 
                         // Register Button
                         MaterialButton(
-                          onPressed:()   {
+                          onPressed: () async {
                             print("clicked");
-                            if(formState.currentState!.validate()){
-                              print("valid");
-                            }else{
+                            if (formState.currentState!.validate()) {
+                              String email = _emailController.text.trim();
+                              String password = _passwordController.text.trim();
+
+                              print("Checking DB for email: '$email'");
+                              var user = await getUserByEmail(email);
+                              print("DB Result: $user");
+
+                              if (user == null) {
+                                print("User is null");
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Email n'existe pas")),
+                                );
+                              } else if (user['pass'] != password) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Mot de passe erroné")),
+                                );
+                              } else if (user['active'] == 0) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Compte désactivé")),
+                                );
+                              } else {
+                                // Success
+                                if (user['type'] == 'admin') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => Forgot_password()), // Interface 04
+                                  );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => Info_user()), // Interface for regular users
+                                  );
+                                }
+                              }
+                            } else {
                               print("invalid");
                             }
                           },
-                          child:Text("Login"),
-                          color:Colors.black,
-                          textColor:Colors.white,
-                          padding:EdgeInsets.all(10),
+                          child: Text("Login"),
+                          color: Colors.black,
+                          textColor: Colors.white,
+                          padding: EdgeInsets.all(10),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)
-                          ),
-
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ],
 

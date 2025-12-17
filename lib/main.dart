@@ -8,11 +8,18 @@ import 'package:flutter_project/PizzaFormPage.dart';
 import 'package:flutter_project/CartPage.dart';
 import 'package:flutter_project/OrderHistoryPage.dart';
 import 'package:flutter_project/OrderSuccessPage.dart';
+import 'package:flutter_project/DB.dart';
+import 'dart:async';
+import 'dart:io';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initDB();
   runApp(const MyApp());
 }
+
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -24,7 +31,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-          home: OrderHistoryPage() ,
+          home: HomePage() ,
 
 
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_project/LoginPage.dart';
 import 'package:flutter_project/HomePage.dart';
+import 'package:flutter_project/DB.dart';
 
 
 class RegisterPage extends StatefulWidget {
@@ -10,10 +11,23 @@ class RegisterPage extends StatefulWidget {
 
 class RegisterPageState extends State<RegisterPage> {
   int currentindx = 1 ;
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+  
   int i = 0 ;
   bool is_empty=true ,has_upper = false , has_lower = false , has_number = false , has_special = false , valid_length = false;
 
   final formState = GlobalKey<FormState>();
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +52,39 @@ class RegisterPageState extends State<RegisterPage> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children:[
-                      // Email Input
-
+                      // user Name Field
                       TextFormField(
+                        controller: _usernameController,
+                        validator:(value){
+                          if(value!.isEmpty){
+                            return "UserName cannot be empty";
+                          }
+                          if(value.length < 3 ){
+                            return "username cant be less than 3 chars";
+                          }
+
+                        },
+                        decoration:InputDecoration(
+                            fillColor: Colors.white,
+                            filled:true,
+                            labelText:"UserName",
+                            prefixIcon:Icon(Icons.person),
+                            border:InputBorder.none,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                              borderRadius: BorderRadius.circular(10),
+                            )
+
+                        ),
+                      ),
+                      // Email Input
+                      TextFormField(
+                        controller: _emailController,
+
                         validator:(value){
                           if(value!.isEmpty){
                             return "Email cannot be empty";
@@ -67,40 +111,54 @@ class RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     // password Section
-                     Container(
-                       child:Column(
+                      // Password Input
+                      TextFormField(
+                        obscureText: true,
+                        controller: _passwordController,
+                        validator: (value) {
+                          print("Validating password: '$value'");
+                          if (value == null || value.isEmpty) {
+                            return 'Password is required';
+                          }
+                          if (!value.contains(RegExp(r'[A-Z]'))) return 'Missing uppercase';
+                          if (!value.contains(RegExp(r'[a-z]'))) return 'Missing lowercase';
+                          if (!value.contains(RegExp(r'[0-9]'))) return 'Missing digit';
+                          if (!value.contains(RegExp(r'[^a-zA-Z0-9]'))) return 'Missing special char';
+                          if (value.length < 8) return 'Too short';
+                          return null;
+                        },
+                        onChanged: (value){
+                          setState(() {
+                            has_upper = value.contains(RegExp(r'[A-Z]'));
+                            has_lower = value.contains(RegExp(r'[a-z]'));
+                            has_number = value.contains(RegExp(r'[0-9]'));
+                            has_special = value.contains(
+                                RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+                            valid_length = value.length >= 8;
+                          });
+
+                        },
+
+                        decoration:InputDecoration(
+                            fillColor: Colors.white,
+                            filled:true,
+                            labelText:"Password",
+                            prefixIcon:Icon(Icons.lock),
+                            border:InputBorder.none,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                              borderRadius: BorderRadius.circular(10),
+                            )
+
+                        ),
+                      ),
+                       Column(
                          children:[
-                           // Password Input
-                           TextFormField(
-                             onChanged: (value){
-                               setState(() {
-                                 has_upper = value.contains(RegExp(r'[A-Z]'));
-                                 has_lower = value.contains(RegExp(r'[a-z]'));
-                                 has_number = value.contains(RegExp(r'[0-9]'));
-                                 has_special = value.contains(
-                                     RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
-                                 valid_length = value.length >= 8;
-                               });
 
-                             },
-
-                             decoration:InputDecoration(
-                                 fillColor: Colors.white,
-                                 filled:true,
-                                 labelText:"Password",
-                                 prefixIcon:Icon(Icons.lock),
-                                 border:InputBorder.none,
-                                 enabledBorder: OutlineInputBorder(
-                                   borderSide: BorderSide(color: Colors.black),
-                                   borderRadius: BorderRadius.circular(10),
-                                 ),
-                                 focusedBorder: OutlineInputBorder(
-                                   borderSide: BorderSide(color: Colors.black),
-                                   borderRadius: BorderRadius.circular(10),
-                                 )
-
-                             ),
-                           ),
                            // validations messages
                            Container(
                              width: double.infinity,
@@ -157,37 +215,36 @@ class RegisterPageState extends State<RegisterPage> {
                            ),
                           ],
                        ),
-                     ),
-                    // user Name Field
-                      TextFormField(
-                        validator:(value){
-                          if(value!.isEmpty){
-                            return "UserName cannot be empty";
-                          }
-                        },
-                        decoration:InputDecoration(
-                            fillColor: Colors.white,
-                            filled:true,
-                            labelText:"UserName",
-                            prefixIcon:Icon(Icons.person),
-                            border:InputBorder.none,
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black),
-                              borderRadius: BorderRadius.circular(10),
-                            )
 
-                        ),
-                      ),
                       // Register Button
                       MaterialButton(
-                        onPressed:()   {
+                        onPressed:() async  {
+
                           print("clicked");
                           if(formState.currentState!.validate()){
-                            print("valid");
+                             String email = _emailController.text.trim();
+                             var existingUser = await getUserByEmail(email);
+                             if(existingUser != null){
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                   SnackBar(content: Text("Email déjà utilisé"))
+                               );
+                             } else {
+                               // Start of requested change: Delete all users before adding new one
+                               // await deleteAllUsers();
+                               // End of requested change
+                               await insertUser(
+                                 _usernameController.text.trim(),
+                                 email,
+                                 _passwordController.text.trim(),
+                                 "user",
+                                 true,
+                               );
+                               List <Map<String,dynamic>>  res = await getUsers();
+                               print("results : $res");
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                   SnackBar(content: Text("Inscription réussie"))
+                               );
+                             }
                           }else{
                             print("invalid");
                           }
