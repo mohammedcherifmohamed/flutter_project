@@ -13,10 +13,9 @@ class Info_user extends StatefulWidget {
 }
 
 class Info_user_state extends State<Info_user> {
-  // Sorting options
   int _sortColumnIndex = 0;
   bool _sortAscending = true;
-  String _sortCriteria = 'Name'; // 'Name' or 'Etat'
+  String _sortCriteria = 'Name'; 
 
   List<Map<String, dynamic>> users = [];
   bool isLoading = true;
@@ -33,16 +32,14 @@ class Info_user_state extends State<Info_user> {
     });
     try {
       print("Loading users...");
-      // Create a mutable copy of the list
       List<Map<String, dynamic>> fetchedUsers = List.from(await getRegularUsers());
       print("Users fetched: ${fetchedUsers.length}");
       
-      // Sort logic
       fetchedUsers.sort((a, b) {
         int compare;
         if (_sortCriteria == 'Name') {
           compare = a['name'].toString().toLowerCase().compareTo(b['name'].toString().toLowerCase());
-        } else { // Etat / Active
+        } else { 
           compare = a['active'].compareTo(b['active']);
         }
         return _sortAscending ? compare : -compare;
@@ -86,7 +83,6 @@ class Info_user_state extends State<Info_user> {
           : SingleChildScrollView(
               child: Column(
                 children: [
-                  // Sorting Controls
                   Container(
                     padding: EdgeInsets.all(10),
                     child: Column(
@@ -140,7 +136,6 @@ class Info_user_state extends State<Info_user> {
                   ),
                   Divider(),
 
-                  // Data Table
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
@@ -173,13 +168,11 @@ class Info_user_state extends State<Info_user> {
                           DataCell(
                             Row(
                               children: [
-                                // Toggle Active Button
                                 IconButton(
                                   icon: Icon(isActive ? Icons.toggle_on : Icons.toggle_off),
                                   color: isActive ? Colors.green : Colors.grey,
                                   onPressed: () => _handleToggleActive(user['uid'], user['active']),
                                 ),
-                                // Delete Button
                                 IconButton(
                                   icon: Icon(Icons.delete),
                                   color: Colors.red,
@@ -196,13 +189,13 @@ class Info_user_state extends State<Info_user> {
               ),
             ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2, // Manage Users is index 2
+        currentIndex: 2, 
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
-          if (index == 0) { // Admin Profile
+          if (index == 0) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => AdminProfile()));
           }
-          if (index == 1) { // Pizza List
+          if (index == 1) { 
              Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
           }
         },

@@ -14,14 +14,12 @@ class Forgot_password extends StatefulWidget {
 class Forgot_password_state extends State<Forgot_password> {
   final _formKey = GlobalKey<FormState>();
   
-  // Controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _currentPassController = TextEditingController();
   final TextEditingController _newPassController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
 
-  // State flags for editing
   bool _editEmail = false;
   bool _editPassword = false;
 
@@ -82,7 +80,6 @@ class Forgot_password_state extends State<Forgot_password> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Name (Disabled)
                         Center(child: Text("Display Info", style: TextStyle(fontWeight: FontWeight.bold))),
                         TextFormField(
                           controller: _nameController,
@@ -91,7 +88,6 @@ class Forgot_password_state extends State<Forgot_password> {
                         ),
                         SizedBox(height: 10),
 
-                        // Selection Checkboxes
                         Divider(),
                         Text("Select to Edit:", style: TextStyle(fontWeight: FontWeight.bold)),
                         CheckboxListTile(
@@ -100,7 +96,6 @@ class Forgot_password_state extends State<Forgot_password> {
                           onChanged: (val) {
                             setState(() {
                               _editEmail = val!;
-                              // Reset email to current if unchecked
                               if (!_editEmail && currentUser != null) {
                                 _emailController.text = currentUser!['email'];
                               }
@@ -122,7 +117,6 @@ class Forgot_password_state extends State<Forgot_password> {
                         ),
                         Divider(),
                         
-                        // Email Field
                         TextFormField(
                           controller: _emailController,
                           enabled: _editEmail,
@@ -166,13 +160,11 @@ class Forgot_password_state extends State<Forgot_password> {
                           SizedBox(height: 20),
                         ],
 
-                        // Current Password (Always Required for changes)
                         Text("Security Verification", style: TextStyle(fontWeight: FontWeight.bold)),
                         TextFormField(
                           controller: _currentPassController,
                           obscureText: true,
                           validator: (value) {
-                            // Only validate if we are actually editing something
                             if (_editEmail || _editPassword) {
                                if (value == null || value.isEmpty) return "Current password required";
                                if (value != currentUser!['pass']) return "Incorrect current password";
@@ -184,7 +176,6 @@ class Forgot_password_state extends State<Forgot_password> {
                         
                         SizedBox(height: 20),
                         
-                        // Confirm Change Button
                         Center(
                           child: MaterialButton(
                             onPressed: () async {
@@ -211,7 +202,6 @@ class Forgot_password_state extends State<Forgot_password> {
                                   
                                   print("Admin updated.");
 
-                                  // Update local state
                                   setState(() {
                                     currentUser = {
                                       ...currentUser!,
@@ -219,7 +209,6 @@ class Forgot_password_state extends State<Forgot_password> {
                                       if (newPass != null) 'pass': newPass
                                     };
                                     
-                                    // Make sure shared prefs are updated if email changed!
                                     if (newEmail != null) {
                                       SharedPreferences.getInstance().then((prefs) {
                                         prefs.setString('email', newEmail);
@@ -231,7 +220,6 @@ class Forgot_password_state extends State<Forgot_password> {
                                     SnackBar(content: Text("Profile updated successfully"))
                                   );
                                   
-                                  // Clear password fields and checkboxes
                                   _currentPassController.clear();
                                   _newPassController.clear();
                                   _confirmPassController.clear();
@@ -258,7 +246,6 @@ class Forgot_password_state extends State<Forgot_password> {
 
                         SizedBox(height: 10),
 
-                        // Consult List Button (Redirect to Interface 05 - Info_user)
                         Center(
                           child: MaterialButton(
                             onPressed: () {
@@ -280,13 +267,13 @@ class Forgot_password_state extends State<Forgot_password> {
               ),
             ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0, // Profile is index 0
+        currentIndex: 0, 
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
-          if (index == 1) { // Pizza List
+          if (index == 1) { 
             Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
           }
-          if (index == 2) { // Admin Dashboard
+          if (index == 2) { 
              Navigator.push(context, MaterialPageRoute(builder: (_) => Info_user()));
           }
         },

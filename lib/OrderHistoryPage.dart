@@ -21,7 +21,6 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int? uid = prefs.getInt('uid');
 
-    // Fallback if uid is not in prefs (e.g. login before fix applied)
     if (uid == null) {
         String? email = prefs.getString('email');
         if (email != null) {
@@ -60,17 +59,17 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       body: isLoading 
       ? Center(child: CircularProgressIndicator()) 
       : orders.isEmpty
-        ? Center(child: Text("Aucune commande existe")) // Req: "Aucune commande existe"
+        ? Center(child: Text("Aucune commande existe"))
         : Padding(
             padding: const EdgeInsets.all(20.0),
             child: SingleChildScrollView(
                 child: Table(
                     border: TableBorder.all(color: Colors.grey.shade300),
                     columnWidths: const {
-                        0: FlexColumnWidth(1), // ID
-                        1: FlexColumnWidth(3), // Date
-                        2: FlexColumnWidth(2), // Nbr Pizzas
-                        3: FlexColumnWidth(2), // Total
+                        0: FlexColumnWidth(1),
+                        1: FlexColumnWidth(3),
+                        2: FlexColumnWidth(2), 
+                        3: FlexColumnWidth(2), 
                     },
                     children: [
                          TableRow(

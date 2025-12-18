@@ -175,7 +175,6 @@ class HomePageState extends State<HomePage>  {
                                     errorBuilder: (ctx, err, stack) => Icon(Icons.broken_image, size: 50),
                                   ),
                                 ),
-                                // Admin Controls on Card
                                 if (userType == 'admin')
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
@@ -242,7 +241,6 @@ class HomePageState extends State<HomePage>  {
                                         ]
                                       ],
                                     ),
-                                    // Add to Cart Icon (only for users)
                                     if (userType != 'admin')
                                     InkWell(
                                       onTap: () {
@@ -276,13 +274,13 @@ class HomePageState extends State<HomePage>  {
           ),
         bottomNavigationBar: userType == 'admin' 
         ? BottomNavigationBar(
-            currentIndex: 1, // Pizza List is index 1 for Admin
+            currentIndex: 1, 
             type: BottomNavigationBarType.fixed,
             onTap: (index) {
-              if (index == 0) { // Admin Profile
+              if (index == 0) { 
                  Navigator.push(context, MaterialPageRoute(builder: (_) => AdminProfile()));
               }
-              if (index == 2) { // Manage Users
+              if (index == 2) {
                  Navigator.push(context, MaterialPageRoute(builder: (_) => Info_user()));
               }
             },
@@ -303,24 +301,22 @@ class HomePageState extends State<HomePage>  {
               currentindx = index;
             });
 
-            // Check if user is logged in
             bool isLoggedIn = await SessionManager.isLoggedIn();
 
-            if (index == 0) { // Login
+            if (index == 0) { 
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => LoginPage()),
               );
             }
             
-            if (index == 1) { // Sign-Up
+            if (index == 1) { 
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => RegisterPage()),
               );
             }
             
-            // Profile - only accessible if logged in
             if (isLoggedIn && index == 3) {
               Navigator.push(
                 context,

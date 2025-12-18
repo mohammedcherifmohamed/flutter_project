@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'dart:convert'; // For JSON
+import 'dart:convert'; 
 
 late Database database;
 
@@ -16,7 +16,6 @@ Future<void> initDB() async {
     join(path, 'database.db'),
     onCreate: (db, version) async {
       print("Creating tables...");
-      // 1. Users Table
       await db.execute(
         'CREATE TABLE IF NOT EXISTS users ('
         'uid INTEGER PRIMARY KEY AUTOINCREMENT, '
@@ -28,7 +27,6 @@ Future<void> initDB() async {
         ')',
       );
 
-      // 2. Pizza Table
       await db.execute(
         'CREATE TABLE IF NOT EXISTS pizza ('
         'pid INTEGER PRIMARY KEY AUTOINCREMENT, '
@@ -45,7 +43,6 @@ Future<void> initDB() async {
         ')',
       );
 
-      // 3. Command Table
       await db.execute(
         'CREATE TABLE IF NOT EXISTS command ('
         'cid INTEGER PRIMARY KEY AUTOINCREMENT, '
@@ -55,7 +52,6 @@ Future<void> initDB() async {
         ')',
       );
 
-      // 4. CommandInfo Table
       await db.execute(
         'CREATE TABLE IF NOT EXISTS commandinfo ('
         'id INTEGER PRIMARY KEY AUTOINCREMENT, '
@@ -68,10 +64,8 @@ Future<void> initDB() async {
         ')',
       );
 
-      // --- SEEDING ---
       print("Seeding data...");
 
-      // Admin Account
       await db.insert('users', {
         'name': 'Admin',
         'email': 'admin@gmail.com',
@@ -80,7 +74,6 @@ Future<void> initDB() async {
         'active': 1
       });
 
-      // User Account
       await db.insert('users', {
         'name': 'User',
         'email': 'user@gmail.com',
@@ -89,11 +82,10 @@ Future<void> initDB() async {
         'active': 1
       });
 
-      // Pizza 1: Mexican
       await db.insert('pizza', {
         'title': 'Mexican',
         'desc': 'Spicy mexican pizza with chili',
-        'img': 'assets/salta3burger.png', // Placeholder
+        'img': 'assets/salta3burger.png',
         'price': 12.0,
         'old_price': 15.0,
         'QteStock': 10,
@@ -103,7 +95,6 @@ Future<void> initDB() async {
         'archive': 1
       });
 
-      // Pizza 2: Vegetarian
       await db.insert('pizza', {
         'title': 'Vegetarian',
         'desc': 'Fresh veggies cheese',
@@ -117,7 +108,6 @@ Future<void> initDB() async {
         'archive': 1
       });
 
-       // Pizza 3: Cheese
       await db.insert('pizza', {
         'title': '4 Cheese',
         'desc': 'Mozzarella, Cheddar, Blue, Parmesan',
@@ -131,7 +121,6 @@ Future<void> initDB() async {
         'archive': 1
       });
 
-      // Pizza 4: Margarita
       await db.insert('pizza', {
         'title': 'Margarita',
         'desc': 'Classic tomato and basil',
@@ -149,7 +138,6 @@ Future<void> initDB() async {
     onUpgrade: (db, oldVersion, newVersion) async {
       print("Upgrading DB from $oldVersion to $newVersion");
       if (oldVersion < 2) {
-         // Create Pizza Table
         await db.execute(
           'CREATE TABLE IF NOT EXISTS pizza ('
           'pid INTEGER PRIMARY KEY AUTOINCREMENT, '
@@ -166,7 +154,6 @@ Future<void> initDB() async {
           ')',
         );
 
-        // Create Command Table
         await db.execute(
           'CREATE TABLE IF NOT EXISTS command ('
           'cid INTEGER PRIMARY KEY AUTOINCREMENT, '
@@ -176,7 +163,6 @@ Future<void> initDB() async {
           ')',
         );
 
-        // Create CommandInfo Table
         await db.execute(
           'CREATE TABLE IF NOT EXISTS commandinfo ('
           'id INTEGER PRIMARY KEY AUTOINCREMENT, '
@@ -187,8 +173,6 @@ Future<void> initDB() async {
           ')',
         );
 
-         // Helper to seed pizza if empty (optional, but good for migration)
-         // Pizza 1: Mexican
         await db.insert('pizza', {
           'title': 'Mexican',
           'desc': 'Spicy mexican pizza with chili',
@@ -202,7 +186,6 @@ Future<void> initDB() async {
           'archive': 1
         });
 
-        // Pizza 2: Vegetarian
         await db.insert('pizza', {
           'title': 'Vegetarian',
           'desc': 'Fresh veggies cheese',
@@ -216,7 +199,6 @@ Future<void> initDB() async {
           'archive': 1
         });
 
-         // Pizza 3: Cheese
         await db.insert('pizza', {
           'title': '4 Cheese',
           'desc': 'Mozzarella, Cheddar, Blue, Parmesan',
@@ -230,7 +212,6 @@ Future<void> initDB() async {
           'archive': 1
         });
 
-        // Pizza 4: Margarita
         await db.insert('pizza', {
           'title': 'Margarita',
           'desc': 'Classic tomato and basil',
@@ -246,8 +227,6 @@ Future<void> initDB() async {
       }
 
       if (oldVersion < 3) {
-        // Fix commandinfo table to include cid if it was missed or recreate it
-        // Check if column exists first to avoid duplicate column error
         var columns = await db.rawQuery('PRAGMA table_info(commandinfo)');
         bool hasCid = columns.any((column) => column['name'] == 'cid');
         
@@ -260,7 +239,6 @@ Future<void> initDB() async {
   );
 }
 
-// USER METHODS
 
 Future<void> insertUser(
     String name, String email, String password, String type, bool active) async {
@@ -301,7 +279,6 @@ Future<void> deleteAllUsers() async {
   await database.delete('users');
 }
 
-// UPDATE USER METHOD (for Interface 04/05)
 Future<void> updateUser(int uid, {String? name, String? email, String? password}) async {
   print("Updating user $uid...");
   Map<String, dynamic> updateData = {};
@@ -320,7 +297,6 @@ Future<void> updateUser(int uid, {String? name, String? email, String? password}
   }
 }
 
-// ADMIN Management Methods
 Future<void> deleteUser(int uid) async {
   print("Deleting user $uid...");
   await database.delete('users', where: 'uid = ?', whereArgs: [uid]);
@@ -338,8 +314,6 @@ Future<void> toggleUserStatus(int uid, int active) async {
 
 Future<List<Map<String, dynamic>>> getRegularUsers() async {
   print("Fetching regular users...");
-  // Filter out users where type is explicitly 'admin'
-  // Note: Depending on case sensitivity, usually 'admin'.
   return await database.query(
     'users',
     where: 'type != ?',
@@ -382,7 +356,7 @@ Future<void> insertPizza(
             'isVeg': isVeg ? 1 : 0,
             'nature': nature,
             'options': optionsJson,
-            'archive': 1 // Default active
+            'archive': 1 
         }
     );
 }
@@ -430,7 +404,6 @@ Future<void> archivePizza(int pid) async {
 
 // ============== ORDERING METHODS ===============
 
-// 1. Insert Command (Header)
 Future<int> insertCommand(int uid, String date) async {
     print("Creating order for user $uid on $date");
     return await database.insert('command', {
@@ -439,7 +412,6 @@ Future<int> insertCommand(int uid, String date) async {
     });
 }
 
-// 2. Insert Command Info (Details)
 Future<void> insertCommandInfo(int cid, int pid, int qte, double price) async {
     print("Adding item to order $cid: pid=$pid, qte=$qte");
     await database.insert('commandinfo', {
@@ -450,24 +422,16 @@ Future<void> insertCommandInfo(int cid, int pid, int qte, double price) async {
     });
 }
 
-// 3. Update Stock
 Future<void> updateStock(int pid, int quantityToRemove) async {
     print("Reducing stock for pizza $pid by $quantityToRemove");
-    // This is a bit unsafe without transactions but sufficient for this level
-    // Better query: UPDATE pizza SET QteStock = QteStock - ? WHERE pid = ?
     await database.rawUpdate(
         'UPDATE pizza SET QteStock = QteStock - ? WHERE pid = ?',
         [quantityToRemove, pid]
     );
 }
 
-// 4. Get User Orders
 Future<List<Map<String, dynamic>>> getUserOrders(int uid) async {
     print("Fetching orders for user $uid");
-    // We need: cid, date, count(pizzas), total_price
-    // Using a raw query with JOIN and GROUP BY
-    // Note: price in commandinfo is the unit price or total item price? 
-    // Usually unit price. So total is sum(price * qte).
     
     return await database.rawQuery('''
         SELECT c.cid, c.date, 

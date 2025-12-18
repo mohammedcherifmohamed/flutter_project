@@ -30,12 +30,8 @@ class _CartPageState extends State<CartPage> {
     if (Cart().items.isEmpty) return;
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    int? uid = prefs.getInt('uid'); // Assuming we stored int uid. Wait, did we store uid?
-    // Let's check Login Page.
-    // In LoginPage, we fetch user by Email. We should store UID in shared prefs.
-    // Accessing DB might be needed if UID not in prefs.
-    // Let's assume we need to fetch UID from email if not present.
-    
+    int? uid = prefs.getInt('uid'); 
+
     if (uid == null) {
         String? email = prefs.getString('email');
         if (email != null) {
@@ -52,20 +48,15 @@ class _CartPageState extends State<CartPage> {
     }
 
     try {
-        // 1. Create Command
-        String date = DateTime.now().toString().substring(0, 16); // YYYY-MM-DD HH:MM
+        String date = DateTime.now().toString().substring(0, 16);
         int cid = await insertCommand(uid, date);
-
-        // 2. Add details
         for (var item in Cart().items) {
             await insertCommandInfo(cid, item.pid, item.quantity, item.price);
             await updateStock(item.pid, item.quantity);
         }
 
-        // 3. Clear Cart
         Cart().clear();
 
-        // 4. Redirect
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Order Saved Successfully!")));
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => OrderHistoryPage()));
 
@@ -95,10 +86,10 @@ class _CartPageState extends State<CartPage> {
                   child: Table(
                     border: TableBorder.all(color: Colors.grey.shade300),
                     columnWidths: const {
-                      0: FlexColumnWidth(3), // Name
-                      1: FlexColumnWidth(1), // Qty
-                      2: FlexColumnWidth(2), // Price
-                      3: FlexColumnWidth(2), // Total
+                      0: FlexColumnWidth(3),
+                      1: FlexColumnWidth(1),
+                      2: FlexColumnWidth(2),
+                      3: FlexColumnWidth(2),
                     },
                     children: [
                       TableRow(

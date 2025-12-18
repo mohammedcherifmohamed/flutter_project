@@ -27,12 +27,10 @@ class Cart {
   List<CartItem> items = [];
 
   void add(int pid, String title, double price, String img, int quantity) {
-    // Check if item exists
     try {
         var existingItem = items.firstWhere((item) => item.pid == pid);
         existingItem.quantity += quantity;
     } catch (e) {
-        // Item does not exist
         items.add(CartItem(
             pid: pid, 
             title: title, 

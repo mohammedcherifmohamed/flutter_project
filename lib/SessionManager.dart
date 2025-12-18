@@ -6,11 +6,11 @@ class SessionManager {
   static const String _keyUid = 'uid';
 
   static Future<void> saveSession(String email, String type, int uid) async {
+    print('Session saved: email=$email, type=$type, uid=$uid');
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyEmail, email);
     await prefs.setString(_keyType, type);
     await prefs.setInt(_keyUid, uid);
-    print('Session saved: email=$email, type=$type, uid=$uid');
   }
 
   static Future<Map<String, dynamic>?> getSession() async {
@@ -56,16 +56,16 @@ class SessionManager {
   }
 
   static Future<void> clearSession() async {
+    print('Session cleared');
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyEmail);
     await prefs.remove(_keyType);
     await prefs.remove(_keyUid);
-    print('Session cleared');
   }
 
   static Future<void> clearAll() async {
+    print('All preferences cleared');
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-    print('All preferences cleared');
   }
 }

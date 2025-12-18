@@ -14,7 +14,6 @@ import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() async {
-  // Initialize FFI only for Desktop
   if (Platform.isWindows || Platform.isLinux) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;

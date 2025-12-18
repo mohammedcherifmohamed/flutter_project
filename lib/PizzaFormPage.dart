@@ -23,7 +23,7 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
   final TextEditingController _oldPriceController = TextEditingController();
   final TextEditingController _qteStockController = TextEditingController();
   final TextEditingController _natureController = TextEditingController();
-  final TextEditingController _optionsController = TextEditingController(); // JSON string
+  final TextEditingController _optionsController = TextEditingController(); 
 
   bool _isVeg = false;
   String? _message;
@@ -32,7 +32,6 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
   @override
   void initState() {
     super.initState();
-    // Simulate "Edit" mode if pizzaData is provided
     if (widget.pizzaData != null) {
       _titleController.text = widget.pizzaData!['title'] ?? '';
       _descriptionController.text = widget.pizzaData!['desc'] ?? '';
@@ -43,7 +42,6 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
       _natureController.text = widget.pizzaData!['nature'] ?? '';
       _optionsController.text = widget.pizzaData!['options']?.toString() ?? '{}';
       
-      // Fix: db returns int (0 or 1), dart expects bool.
       var isVegData = widget.pizzaData!['isVeg'];
       if (isVegData is int) {
          _isVeg = isVegData == 1;
@@ -74,7 +72,6 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
       try {
         if (widget.pizzaData == null) {
           print("Mode: ADD");
-          // ADD MODE
           await insertPizza(
             _titleController.text,
             _descriptionController.text,
@@ -92,7 +89,6 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
           });
         } else {
           print("Mode: EDIT. PID: ${widget.pizzaData!['pid']}");
-          // EDIT MODE
           await updatePizza(
             widget.pizzaData!['pid'],
             _titleController.text,
@@ -128,7 +124,6 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
   }
 
   void _goToPizzaPage() {
-    // Go back to previous page (HomePage) to trigger reload
     Navigator.pop(context);
   }
 
@@ -160,7 +155,6 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
                 ),
               const SizedBox(height: 16),
               
-              // Title
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(labelText: 'Titre'),
@@ -168,7 +162,6 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
               ),
               const SizedBox(height: 10),
 
-              // Description
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Description'),
@@ -176,14 +169,12 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
               ),
               const SizedBox(height: 10),
 
-              // Image URL
               TextFormField(
                 controller: _imageController,
                 decoration: const InputDecoration(labelText: 'Image URL'),
               ),
               const SizedBox(height: 10),
 
-              // Prices in a Row
               Row(
                 children: [
                   Expanded(
@@ -206,22 +197,18 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
               ),
               const SizedBox(height: 10),
 
-              // Stock
               TextFormField(
                 controller: _qteStockController,
                 decoration: const InputDecoration(labelText: 'Quantité en Stock'),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 10),
-
-              // Nature
               TextFormField(
                 controller: _natureController,
                 decoration: const InputDecoration(labelText: 'Nature (ex: Piquante, ... )'),
               ),
               const SizedBox(height: 10),
 
-              // Options (JSON)
               TextFormField(
                 controller: _optionsController,
                 decoration: const InputDecoration(
@@ -232,7 +219,6 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
               ),
               const SizedBox(height: 10),
 
-              // IsVeg Checkbox
               CheckboxListTile(
                 title: const Text('Végétarienne ?'),
                 value: _isVeg,
@@ -245,12 +231,11 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
 
               const SizedBox(height: 20),
 
-              // Action Buttons
               ElevatedButton(
                 onPressed: _submitForm,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.orange, // Pizza theme color?
+                  backgroundColor: Colors.orange, 
                 ),
                 child: Text(widget.pizzaData == null ? 'Ajouter' : 'Modifier'),
               ),
