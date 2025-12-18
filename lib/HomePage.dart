@@ -9,10 +9,11 @@ import 'package:flutter_project/Info_user.dart';
 import 'package:flutter_project/PizzaFormPage.dart';
 import 'package:flutter_project/ProductDetails.dart';
 import 'package:flutter_project/DB.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_project/SessionManager.dart';
 import 'package:flutter_project/CartPage.dart';
 import 'package:flutter_project/OrderHistoryPage.dart';
-import 'package:flutter_project/Cart.dart'; // To show badge if we want, or just link
+import 'package:flutter_project/Cart.dart';
+
 
 class HomePageState extends State<HomePage>  {
   int currentindx = 2 ;
@@ -27,14 +28,14 @@ class HomePageState extends State<HomePage>  {
   void initState() {
     super.initState();
     _checkUserType();
-    _loadPizzas();
   }
 
   Future<void> _checkUserType() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? type = await SessionManager.getType();
     setState(() {
-      userType = prefs.getString('type');
+      userType = type;
     });
+    _loadPizzas();
   }
 
   Future<void> _loadPizzas() async {
@@ -43,11 +44,14 @@ class HomePageState extends State<HomePage>  {
     });
     try {
       List<Map<String, dynamic>> data = await getPizzas();
-      // Filter out of stock pizzas for users (admins might want to see them to restock, but requirement says "don't display")
-      // Start with global filter as per "Interface 02 ... les pizzas out of stock ne s’affiche pas"
-      // If we want admin to see them, we can add check. Assuming generic "don't display".
       
-      var availablePizzas = data.where((p) => (p['QteStock'] as int) > 0).toList();
+      List<Map<String, dynamic>> availablePizzas;
+      
+      if (userType == 'admin') {
+         availablePizzas = data;
+      } else {
+         availablePizzas = data.where((p) => (p['QteStock'] as int) > 0).toList();
+      }
 
       setState(() {
         pizzas = availablePizzas;
@@ -68,6 +72,22 @@ class HomePageState extends State<HomePage>  {
     _loadPizzas();
   }
 
+  List<BottomNavigationBarItem> _buildBottomNavItems() {
+    List<BottomNavigationBarItem> items = [
+      BottomNavigationBarItem(icon: Icon(Icons.person_2), label: "Login"),
+      BottomNavigationBarItem(icon: Icon(Icons.add), label: "Sign-Up"),
+      BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+    ];
+
+    if (userType != null && userType != 'admin') {
+      items.add(
+        BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: "Profile"),
+      );
+    }
+
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,11 +100,11 @@ class HomePageState extends State<HomePage>  {
             if(userType != 'admin') ...[
               IconButton(onPressed: (){
                    Navigator.push(context, MaterialPageRoute(builder: (_) => OrderHistoryPage()));
-              }, icon: Icon(Icons.history, color: Colors.blue)), // History Icon
+              }, icon: Icon(Icons.history, color: Colors.blue)), 
 
               IconButton(onPressed: (){
                    Navigator.push(context, MaterialPageRoute(builder: (_) => CartPage()));
-              }, icon: Icon(Icons.shopping_cart, color: Colors.orange)), // Cart Icon
+              }, icon: Icon(Icons.shopping_cart, color: Colors.orange)), 
             ]
           ],
         ),
@@ -113,7 +133,7 @@ class HomePageState extends State<HomePage>  {
                   : pizzas.isEmpty 
                     ? Center(child: Text("No pizzas available"))
                     : GridView.count(
-                    childAspectRatio: 0.75, // Adjusted for height
+                    childAspectRatio: 0.75, 
                     crossAxisCount: 2,
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 15,
@@ -123,12 +143,10 @@ class HomePageState extends State<HomePage>  {
 
                       return GestureDetector(
                         onTap: () {
-                          // Allow admin to edit even if stock is low (though they are hidden now? Maybe logic conflict)
-                          // Re-reading: "Interface 02 ... les pizzas out of stock ne s’affiche pas". So they are hidden for everyone.
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (_) => ProductDetails(pizza: pizza)),
-                          ).then((_) => _loadPizzas()); // Reload on return to update stock if changed
+                          ).then((_) => _loadPizzas()); 
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -237,14 +255,7 @@ class HomePageState extends State<HomePage>  {
                                           shape: BoxShape.circle,
                                           ),
                                         child: Icon(
-                                          Icons.shopping_cart, // Changed to shopping cart as requested "button_icon après shopping_icon" - actually user asked "button_icon après shopping_icon qui redirige vers interface 08".
-                                          // Wait, "Add a button_icon after shopping_icon that redirects user to interface 08 (History)".
-                                          // My AppBar implementation handles this cleaner.
-                                          // I will leave this as "Add to Cart" or direct to Cart.
-                                          // Let's keep it as is (visual decoration mostly here since logic is in Details)
-                                          // But maybe user wants quick add? Not specified. 
-                                          // Requirement: "button_icon après shopping_icon qui redirige user vers interface 08". The shopping icon IS the cart.
-                                          // I added History icon in AppBar.
+                                          Icons.shopping_cart, 
                                           color: Colors.white,
                                           size: 18,
                                         ),
@@ -283,42 +294,41 @@ class HomePageState extends State<HomePage>  {
           )
         : BottomNavigationBar(
           currentIndex: currentindx,
-          type: BottomNavigationBarType.fixed, // Fix: Force fixed type for >3 items
+          type: BottomNavigationBarType.fixed,
           selectedItemColor: Colors.orange,
           unselectedItemColor: Colors.grey,
           backgroundColor: Colors.white,
-          onTap: (index){
+          onTap: (index) async {
             setState(() {
               currentindx = index;
             });
 
-            if (index == 1) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => RegisterPage()),
-              );
-            }
+            // Check if user is logged in
+            bool isLoggedIn = await SessionManager.isLoggedIn();
 
-            if (index == 0) {
+            if (index == 0) { // Login
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => LoginPage()),
               );
             }
-             if (index == 3) { // Profile
+            
+            if (index == 1) { // Sign-Up
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => RegisterPage()),
+              );
+            }
+            
+            // Profile - only accessible if logged in
+            if (isLoggedIn && index == 3) {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => UserProfile()),
               );
             }
           },
-
-          items: [
-            BottomNavigationBarItem(icon:Icon(Icons.person_2),label:"Login"),
-            BottomNavigationBarItem(icon:Icon(Icons.add),label:"Sign-Up"),
-            BottomNavigationBarItem(icon:Icon(Icons.home),label:"Home"),
-            BottomNavigationBarItem(icon:Icon(Icons.account_circle),label:"Profile"),
-          ],
+          items: _buildBottomNavItems(),
         )
     );
   }

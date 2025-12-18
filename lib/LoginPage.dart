@@ -153,7 +153,7 @@ class LoginPageState extends State<LoginPage> {
                                 );
                               } else if (user['active'] == 0) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Compte désactivé")),
+                                  SnackBar(content: Text("Account not active")),
                                 );
                               } else {
                                 // Success
@@ -165,13 +165,13 @@ class LoginPageState extends State<LoginPage> {
                                 if (user['type'] == 'admin') {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (_) => AdminProfile()), // Admin Profile
+                                    MaterialPageRoute(builder: (_) => AdminProfile()),
                                   );
                                 } else {
                                   // Interface 05 (User)
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (_) => UserProfile()), // User Profile
+                                    MaterialPageRoute(builder: (_) => UserProfile()), 
                                   );
                                 }
                               }

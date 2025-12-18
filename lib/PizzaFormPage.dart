@@ -42,7 +42,16 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
       _qteStockController.text = widget.pizzaData!['QteStock']?.toString() ?? '';
       _natureController.text = widget.pizzaData!['nature'] ?? '';
       _optionsController.text = widget.pizzaData!['options']?.toString() ?? '{}';
-      _isVeg = widget.pizzaData!['isVeg'] ?? false;
+      
+      // Fix: db returns int (0 or 1), dart expects bool.
+      var isVegData = widget.pizzaData!['isVeg'];
+      if (isVegData is int) {
+         _isVeg = isVegData == 1;
+      } else if (isVegData is bool) {
+         _isVeg = isVegData;
+      } else {
+         _isVeg = false;
+      }
     }
   }
 
@@ -60,9 +69,11 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
   }
 
   Future<void> _submitForm() async {
+    print("Submit Form Triggered");
     if (_formKey.currentState!.validate()) {
       try {
         if (widget.pizzaData == null) {
+          print("Mode: ADD");
           // ADD MODE
           await insertPizza(
             _titleController.text,
@@ -80,6 +91,7 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
             _message = "Pizza ajoutée avec succès !";
           });
         } else {
+          print("Mode: EDIT. PID: ${widget.pizzaData!['pid']}");
           // EDIT MODE
           await updatePizza(
             widget.pizzaData!['pid'],
@@ -93,18 +105,21 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
             _natureController.text,
             _optionsController.text.isEmpty ? '{}' : _optionsController.text,
           );
+          print("Update finished.");
            setState(() {
             _isError = false;
             _message = "Pizza modifiée avec succès !";
           });
         }
       } catch (e) {
+         print("Error submitting form: $e");
          setState(() {
           _isError = true;
           _message = "Erreur: $e";
         });
       }
     } else {
+       print("Form validation failed");
        setState(() {
         _isError = true;
         _message = "Veuillez corriger les erreurs dans le formulaire.";
@@ -113,7 +128,8 @@ class _PizzaFormPageState extends State<PizzaFormPage> {
   }
 
   void _goToPizzaPage() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
+    // Go back to previous page (HomePage) to trigger reload
+    Navigator.pop(context);
   }
 
   @override

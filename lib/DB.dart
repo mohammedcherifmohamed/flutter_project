@@ -75,7 +75,7 @@ Future<void> initDB() async {
       await db.insert('users', {
         'name': 'Admin',
         'email': 'admin@gmail.com',
-        'pass': 'Admin123!',
+        'pass': '1Aa@azer',
         'type': 'admin',
         'active': 1
       });
@@ -84,7 +84,7 @@ Future<void> initDB() async {
       await db.insert('users', {
         'name': 'User',
         'email': 'user@gmail.com',
-        'pass': 'User123!',
+        'pass': '1Aa@azer',
         'type': 'user',
         'active': 1
       });
@@ -192,7 +192,7 @@ Future<void> initDB() async {
         await db.insert('pizza', {
           'title': 'Mexican',
           'desc': 'Spicy mexican pizza with chili',
-          'img': 'assets/salta3burger.png', // Placeholder
+          'img': 'assets/salta3burger.png', 
           'price': 12.0,
           'old_price': 15.0,
           'QteStock': 10,
@@ -247,8 +247,13 @@ Future<void> initDB() async {
 
       if (oldVersion < 3) {
         // Fix commandinfo table to include cid if it was missed or recreate it
-        // Since sqlite ALTER TABLE ADD COLUMN is supported
-        await db.execute('ALTER TABLE commandinfo ADD COLUMN cid INTEGER REFERENCES command(cid)');
+        // Check if column exists first to avoid duplicate column error
+        var columns = await db.rawQuery('PRAGMA table_info(commandinfo)');
+        bool hasCid = columns.any((column) => column['name'] == 'cid');
+        
+        if (!hasCid) {
+           await db.execute('ALTER TABLE commandinfo ADD COLUMN cid INTEGER REFERENCES command(cid)');
+        }
       }
     },
     version: 3,
