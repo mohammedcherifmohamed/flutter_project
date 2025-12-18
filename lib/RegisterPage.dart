@@ -247,7 +247,6 @@ class RegisterPageState extends State<RegisterPage> {
                             ),
                             SizedBox(height: 16),
 
-                            // Password Requirements
                             Container(
                               padding: EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -363,7 +362,6 @@ class RegisterPageState extends State<RegisterPage> {
                             ),
                             SizedBox(height: 24),
 
-                            // Login Link
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [

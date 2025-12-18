@@ -18,7 +18,6 @@ class _ProductDetailsState extends State<ProductDetails> {
   @override
   void initState() {
     super.initState();
-    // Decode options JSON
     try {
       if (widget.pizza['options'] != null) {
         options = jsonDecode(widget.pizza['options']);
@@ -65,7 +64,6 @@ class _ProductDetailsState extends State<ProductDetails> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image
           Positioned(
             top: 0,
             left: 0,
@@ -77,7 +75,6 @@ class _ProductDetailsState extends State<ProductDetails> {
               errorBuilder: (ctx, err, stack) => Container(color: Colors.grey, child: Icon(Icons.broken_image, size: 50)),
             ),
           ),
-          // Back Button
           Positioned(
             top: 40,
             left: 20,
@@ -89,7 +86,6 @@ class _ProductDetailsState extends State<ProductDetails> {
               ),
             ),
           ),
-           // Cart Icon with Badge
            Positioned(
             top: 40,
             right: 20,
@@ -98,13 +94,11 @@ class _ProductDetailsState extends State<ProductDetails> {
               child: IconButton(
                 icon: Icon(Icons.shopping_cart, color: Colors.orange),
                 onPressed: () {
-                   // Just purely visual or maybe show current count in snackbar
                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Items in cart: ${Cart().itemCount}")));
                 },
               ),
             ),
            ),
-           // Count badge
            Positioned(
              top: 35,
              right: 15,
@@ -115,7 +109,6 @@ class _ProductDetailsState extends State<ProductDetails> {
              ),
            ),
 
-          // Content
           Positioned(
             top: 280,
             left: 0,
@@ -203,7 +196,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                         )
                     ],
                     SizedBox(height: 30),
-                    // Quantity Selector
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -238,7 +230,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                           ),
                         ),
                         child: Text(
-                          "Ajouter carte", // Requirement: Changer le texte du button en « ajouter carte »
+                          "Ajouter carte", 
                           style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
                       ),

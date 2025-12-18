@@ -76,7 +76,6 @@ class LoginPageState extends State<LoginPage> {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Logo/Icon
                               Container(
                                 height: 80,
                                 width: 80,
@@ -115,7 +114,7 @@ class LoginPageState extends State<LoginPage> {
                               ),
                               SizedBox(height: 32),
 
-                              // Email Input
+                              // email Input
                               TextFormField(
                                 controller: _emailController,
                                 validator: (value) {
@@ -203,7 +202,7 @@ class LoginPageState extends State<LoginPage> {
                               ),
                               SizedBox(height: 32),
 
-                              // Login Button
+                              //  Button
                               Container(
                                 height: 56,
                                 decoration: BoxDecoration(
@@ -253,7 +252,6 @@ class LoginPageState extends State<LoginPage> {
                                           ),
                                         );
                                       } else {
-                                        // Success - Save session
                                         await SessionManager.saveSession(
                                           user['email'],
                                           user['type'],
@@ -292,7 +290,6 @@ class LoginPageState extends State<LoginPage> {
                               ),
                               SizedBox(height: 24),
 
-                              // Sign Up Link
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

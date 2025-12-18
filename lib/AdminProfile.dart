@@ -15,7 +15,6 @@ class AdminProfile extends StatefulWidget {
 class _AdminProfileState extends State<AdminProfile> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _currentPassController = TextEditingController();
@@ -90,7 +89,6 @@ class _AdminProfileState extends State<AdminProfile> {
         child: SafeArea(
           child: Column(
             children: [
-              // Custom AppBar
               Padding(
                 padding: EdgeInsets.all(16),
                 child: Row(
@@ -116,7 +114,6 @@ class _AdminProfileState extends State<AdminProfile> {
                 ),
               ),
 
-              // Content
               Expanded(
                 child: isLoading
                     ? Center(child: CircularProgressIndicator(color: Colors.white))
@@ -143,7 +140,6 @@ class _AdminProfileState extends State<AdminProfile> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                                    // Admin Icon
                                     Container(
                                       height: 100,
                                       width: 100,
@@ -181,7 +177,6 @@ class _AdminProfileState extends State<AdminProfile> {
                                     ),
                                     SizedBox(height: 32),
 
-                                    // Name (Disabled)
                                     TextFormField(
                                       controller: _nameController,
                                       enabled: false,
@@ -203,7 +198,6 @@ class _AdminProfileState extends State<AdminProfile> {
                                     ),
                                     SizedBox(height: 16),
 
-                                    // Enable Editing Checkbox
                                     Container(
                                       padding: EdgeInsets.all(12),
                                       decoration: BoxDecoration(
@@ -237,7 +231,6 @@ class _AdminProfileState extends State<AdminProfile> {
                                     ),
                                     SizedBox(height: 16),
 
-                                    // Email (Editable if checkbox checked)
                                     TextFormField(
                                       controller: _emailController,
                                       enabled: _isEditingEnabled,
@@ -275,7 +268,6 @@ class _AdminProfileState extends State<AdminProfile> {
                                     ),
                                     SizedBox(height: 24),
 
-                                    // Security Section
                                     Text(
                                       "Security",
                                       style: TextStyle(
@@ -430,7 +422,7 @@ class _AdminProfileState extends State<AdminProfile> {
                                     ),
                                     SizedBox(height: 32),
 
-                                    // Update Button
+                                    //  Button
                                     Container(
                                       height: 56,
                                       decoration: BoxDecoration(
@@ -507,7 +499,6 @@ class _AdminProfileState extends State<AdminProfile> {
                                     ),
                                     SizedBox(height: 16),
 
-                                    // Manage Users Button
                                     OutlinedButton(
                                       onPressed: () {
                                         Navigator.push(

@@ -86,7 +86,6 @@ class UserProfileState extends State<UserProfile> {
         child: SafeArea(
           child: Column(
             children: [
-              // Custom AppBar
               Padding(
                 padding: EdgeInsets.all(16),
                 child: Row(
@@ -112,7 +111,6 @@ class UserProfileState extends State<UserProfile> {
                 ),
               ),
               
-              // Content
               Expanded(
                 child: isLoading
                     ? Center(child: CircularProgressIndicator(color: Colors.white))
@@ -139,7 +137,6 @@ class UserProfileState extends State<UserProfile> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                                    // Profile Icon
                                     Container(
                                       height: 100,
                                       width: 100,
@@ -177,7 +174,6 @@ class UserProfileState extends State<UserProfile> {
                                     ),
                                     SizedBox(height: 32),
 
-                                    // Email (Disabled)
                                     TextFormField(
                                       controller: _emailController,
                                       enabled: false,
@@ -199,7 +195,6 @@ class UserProfileState extends State<UserProfile> {
                                     ),
                                     SizedBox(height: 16),
 
-                                    // Name (Editable)
                                     TextFormField(
                                       controller: _nameController,
                                       validator: (value) {
@@ -228,7 +223,6 @@ class UserProfileState extends State<UserProfile> {
                                     ),
                                     SizedBox(height: 24),
 
-                                    // Security Section
                                     Text(
                                       "Security",
                                       style: TextStyle(
@@ -239,7 +233,6 @@ class UserProfileState extends State<UserProfile> {
                                     ),
                                     SizedBox(height: 16),
 
-                                    // Current Password
                                     TextFormField(
                                       controller: _currentPassController,
                                       obscureText: _obscureCurrentPassword,
@@ -281,7 +274,6 @@ class UserProfileState extends State<UserProfile> {
                                     ),
                                     SizedBox(height: 16),
 
-                                    // New Password (Optional)
                                     TextFormField(
                                       controller: _newPassController,
                                       obscureText: _obscureNewPassword,
@@ -327,7 +319,6 @@ class UserProfileState extends State<UserProfile> {
                                     ),
                                     SizedBox(height: 16),
 
-                                    // Confirm Password
                                     TextFormField(
                                       controller: _confirmPassController,
                                       obscureText: _obscureConfirmPassword,
@@ -369,7 +360,6 @@ class UserProfileState extends State<UserProfile> {
                                     ),
                                     SizedBox(height: 32),
 
-                                    // Update Button
                                     Container(
                                       height: 56,
                                       decoration: BoxDecoration(
@@ -445,7 +435,6 @@ class UserProfileState extends State<UserProfile> {
                                     ),
                                     SizedBox(height: 16),
 
-                                    // View Pizzas Button
                                     OutlinedButton(
                                       onPressed: () {
                                         Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));

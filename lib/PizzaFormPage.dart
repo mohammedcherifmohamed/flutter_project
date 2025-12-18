@@ -4,7 +4,7 @@ import 'package:flutter_project/DB.dart';
 import 'package:flutter_project/HomePage.dart';
 
 class PizzaFormPage extends StatefulWidget {
-  final Map<String, dynamic>? pizzaData; // Pass data to simulate edit mode
+  final Map<String, dynamic>? pizzaData; 
 
   const PizzaFormPage({Key? key, this.pizzaData}) : super(key: key);
 
@@ -15,7 +15,6 @@ class PizzaFormPage extends StatefulWidget {
 class _PizzaFormPageState extends State<PizzaFormPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _imageController = TextEditingController();
